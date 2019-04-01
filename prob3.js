@@ -72,9 +72,6 @@ class mosc {
     dmVacVac[1][2] = mVac[1] - mVac[2];
     dmVacVac[2][1] = -dmVacVac[1][2];
 
-    // console.log(`setmass: { dms21: ${dms21},dms23: ${dms23} }`);
-    // console.log(`      dmVacVac:`);
-    // console.log(dmVacVac);
   }
 
   /***********************************************************************
@@ -221,7 +218,6 @@ class mosc {
              Mix[kElec][0][kImaginary] * Mix[kElec][0][kImaginary]);
     gammaV = 0.0;
 
-    // console.log(`getM: {fac: ${fac},alpha: ${alpha},alphaV: ${alphaV},beta: ${beta},betaV: ${betaV},gamma: ${gamma},gammaV: ${gammaV} }`);
     /* Compute the argument of the arc-cosine */
     tmp = alpha * alpha - 3.0 * beta;
     tmpV = alphaV * alphaV - 3.0 * betaV;
@@ -240,8 +236,6 @@ class mosc {
       argV = argV / Math.abs(argV);
     }
 
-    // console.log(`getM: {argV: ${argV},argV: ${argV} }`);
-
     /* These are the three roots the paper refers to */
     theta0 = Math.acos(arg) / 3.0;
     theta1 = theta0 - (2.0 * Math.PI / 3.0);
@@ -250,8 +244,6 @@ class mosc {
     theta0V = Math.acos(argV) / 3.0;
     theta1V = theta0V - (2.0 * Math.PI / 3.0);
     theta2V = theta0V + (2.0 * Math.PI / 3.0);
-
-    // console.log(`getM: {theta0: ${theta0},theta1: ${theta1},theta2: ${theta2},theta0V: ${theta0V},theta1V: ${theta1V},theta2V: ${theta2V} }`);
 
     mMatU[0] = mMatU[1] = mMatU[2] = -(2.0 / 3.0) * Math.sqrt(tmp);
     mMatU[0] *= Math.cos(theta0);
@@ -271,9 +263,6 @@ class mosc {
     mMatV[1] += tmpV;
     mMatV[2] += tmpV;
 
-    // console.log(`getM: mMatV:`);
-    // console.log(mMatV);
-
     /* Sort according to which reproduce the vaccum eigenstates */
     for (let i = 0; i < 3; i++) {
       tmpV = Math.abs(dmVacVac[i][0] - mMatV[0]);
@@ -288,22 +277,12 @@ class mosc {
       mMat[i] = mMatU[k];
     }
 
-    // console.log(`getM: mMatU:`);
-    // console.log(mMatU);
-
-    // console.log(`getM: mMat:`);
-    // console.log(mMat);
-
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         dmMatMat[i][j] = mMat[i] - mMat[j];
         dmMatVac[i][j] = mMat[i] - dmVacVac[j][0];
       }
     }
-    // console.log(`getM: dmMatMat: `);
-    // console.log(dmMatMat);
-    // console.log(`    : dmMatVac`);
-    // console.log(dmMatVac);
   }
 
   get_product(L, E, rho, Mix, dmMatVac, dmMatMat, antitype, product) {
@@ -494,7 +473,6 @@ class mosc {
     } else if (flavor == sterile_type) {
       this.matterFlavor = sterile_type;
     }
-    // console.log(`setMatterFlavor: this.matterFlavor: ${this.matterFlavor}`);
   }
 
   /***********************************************************************
@@ -619,8 +597,6 @@ class mosc {
   }
 
   setmix_sin(s12, s23, s13, dcp, Mix) {
-    // console.log(
-        // `setmix_sin: { s12: ${s12}, s23: ${s23}, s13: ${s13}, dcp: ${dcp} }`);
     let c12, c23, c13, sd, cd;
 
     if (s12 > 1.0) {
@@ -682,8 +658,6 @@ class mosc {
       Mix[2][2][kReal] = c12 * s13 * s23 + c13 * c23 * cd;
       Mix[2][2][kImaginary] = c13 * c23 * sd;
     }
-    // console.log(`setmix_sin: Mix: `);
-    // console.log(Mix);
   }
 }
 
@@ -732,9 +706,6 @@ class mosc3 {
 
   init_mixing_matrix(dm21f, dm32f, s12f, s23f, s31f, dcpf) {
 
-    // console.log(`init_mixing_matrix: { dm21f: ${dm21f}, dm32f: ${
-        // dm32f}, s12f: ${s12f}, s23f: ${s23f}, s31f: ${s31f}, dcpf: ${dcpf} }`);
-
     this.reset();
 
     this.dm21 = dm21f;
@@ -751,8 +722,6 @@ class mosc3 {
     this.Ain[1][1][kReal] = 1.0;
     this.Ain[2][2][kReal] = 1.0;
 
-    // console.log(`init_mixing_matrix: this.Ain:`);
-    // console.log(this.Ain);
   }
 
   get_oscillation_parameters(dm21f, dm32f, s12f, s23f, s31f, dcpf) {
@@ -815,8 +784,6 @@ class mosc3 {
    *   Obtain transition matrix
    */
   get_transition_matrix(nutypei, Enuf, rhof, Lenf, Aout, phase_offsetf) {
-    // console.log(`get_transition_matrix: {nutypei: ${nutypei},Enuf: ${
-        // Enuf},rhof: ${rhof},Lenf: ${Lenf},phase_offsetf: ${phase_offsetf} }`);
     let nutype, make_average;
     let Enu, rho, Len;
     let dmMatVac = [];
@@ -994,17 +961,6 @@ class BargerPropagator {
       if (mAtm < 0.0) {
         lm32 = mAtm - m21;
       }
-    } else {
-      //  if( !kSuppressWarnings )
-      //  {
-      //    std::cout << " BargerPropagator::SetMNS - " << std::endl;
-      //    std::cout << "     You have opted to specify the value of m23 by
-      //    yourself. " << std::endl; std::cout << "     This means you must
-      //    correct the value of m23 when switching " << std::endl; std::cout <<
-      //    "     between the mass hierarchy options. " << std::endl; std::cout
-      //    << "     This message can be suppressed with
-      //    BargerPropagator::SuppressWarnings()"<< std::endl;
-      // }
     }
 
     // if xAB = sin( xAB )^2
@@ -1026,15 +982,13 @@ class BargerPropagator {
       this.kAntiMNSMatrix = false;
     }
 
-    // console.log(`SetMNS: { m21: ${m21}, lm32: ${lm32}, sin12: ${
-        // sin12}, sin23: ${sin23},sin13: ${sin13},delta: ${
-        // delta}, AntiMNSMatrix: ${this.kAntiMNSMatrix} }`);
-
     this.fmosc3.init_mixing_matrix(m21, lm32, sin12, sin23, sin13, delta);
   }
 
   // Crust is 3.3 g/cm^3
   propagateLinear(NuFlavor, pathlength, Density) {
+
+    // console.log(`propagateLinear(${NuFlavor},${pathlength},${Density})`);
 
     let TransitionMatrix = [];
     let TransitionProduct = [];
@@ -1060,31 +1014,6 @@ class BargerPropagator {
         }
       }
     }
-
-    // if (!kSuppressWarnings) {
-    //   if ((kAntiMNSMatrix && NuFlavor > 0) ||
-    //       (!kAntiMNSMatrix && NuFlavor < 0)) {
-    //     std::cout << " Warning BargerPropagator::propagateLinear - "
-    //               << std::endl;
-    //     std::cout
-    //         << "     Propagating neutrino flavor and MNS matrix definition
-    //         differ :"
-    //         << std::endl;
-    //     std::cout << "     MNS Matrix was defined for : "
-    //               << (kAntiMNSMatrix ? " Nubar " : "Nu") << std::endl;
-    //     std::cout << "     Propagation is for         : "
-    //               << (NuFlavor < 0 ? " Nubar " : "Nu") << std::endl;
-    //     std::cout
-    //         << "     Please check your call to BargerPropagator::SetMNS() "
-    //         << std::endl;
-    //     std::cout
-    //         << "     This message can be suppressed with a call to
-    //         BargerPropagator::SuppressWarnings() "
-    //         << std::endl;
-    //
-    //     exit(-1);
-    //   }
-    // }
 
     mosc3.clear_complex_matrix(TransitionMatrix);
     mosc3.clear_complex_matrix(TransitionProduct);
@@ -1133,6 +1062,28 @@ class BargerPropagator {
   SetEnergy(x) { this.Energy = x; }
 
   GetProb(nuIn, nuOut) {
-    return this.Probability[Math.abs(nuIn) - 1][Math.abs(nuOut) - 1]
+    let p = this.Probability[Math.abs(nuIn) - 1][Math.abs(nuOut) - 1];
+    // console.log(`GetProb(${nuIn},${nuOut}) @ E = ${this.Energy} GeV = ${p}`);
+
+    return p;
   }
 };
+
+function GetProb3NuTypeFromPDG(pdg){
+  if(pdg === 12){
+    return 1;
+  } else if(pdg === 14){
+    return 2;
+  } else if(pdg === 16){
+    return 3;
+  } else if(pdg === -12){
+    return -1;
+  } else if(pdg === -14){
+    return -2;
+  } else if(pdg === -16){
+    return -3;
+  } else {
+    console.log(`Invalid neutrino pdg: ${pdg}`);
+    return 0;
+  }
+}
