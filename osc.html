@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -8,161 +9,96 @@
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
-  <!-- Plotly.js -->
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style type="text/css">
+    .overlay {
+      fill: none;
+      pointer-events: all;
+    }
+  </style>
+
+  <!-- MathJax -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+
+  <!-- d3.js -->
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <!-- Local code -->
   <script src="prob3.js"></script>
   <script src="OscProbConstraints.js"></script>
+  <script src="OscProbPlot.js"></script>
 
   <script type="text/javascript">
-        var input_ssqt13;
-        var input_baseline;
-        var input_dm23;
-        var input_ssqt23;
-
-        var input_from_pdg;
-        var input_to_pdg;
-
-        var input_EMin;
-        var input_EMax;
-        var input_nsteps;
 
         var bp = new BargerPropagator();
+        var op = new OscParams();
 
-        var Series = [];
-        var nseries = 0;
-        var plot_initialized = false;
-        var have_tmp = false;
+        function AddCurve(plot, params, is_tmp) {
 
-        function ClearPlot() {
-
-          Series = [];
-          nseries = 0;
-          have_tmp = false;
-
-          Plotly.newPlot('OscProbPlot', Series);
-        }
-
-        function AddPlot(is_tmp) {
-          let S2Th12 = 0.297;
-          let S2Th13 = 0.0214;
-          let S2Th23 = 0.534;
-
-          let Dm2_21 = 7.37E-5;
-          let Dm2_Atm = 2.539E-3;
-
-          S2Th13 = parseFloat(input_ssqt13.value);
-
-          Dm2_Atm = parseFloat(input_dm23.value);
-          S2Th23 = parseFloat(input_ssqt23.value);
-
-          let nufrom = GetProb3NuTypeFromPDG(parseInt(input_from_pdg.value));
-          let nuto = GetProb3NuTypeFromPDG(parseInt(input_to_pdg.value));
+          let nufrom = GetProb3NuTypeFromPDG(params.from_pdg);
+          let nuto = GetProb3NuTypeFromPDG(params.to_pdg);
           if((nufrom === 0)||(nuto === 0)){
             return;
           }
-          let dcp = 0;
 
-          bp.SetMNS(S2Th12,S2Th13,S2Th23,Dm2_21,Dm2_Atm,dcp, 1, true, 1);
+          bp.SetMNS(params.S2Th12,params.S2Th13,params.S2Th23,params.Dm2_21,params.Dm2_Atm,params.dcp, 1, true, 1);
 
-          let EVect = [];
-          let PrbVect = [];
-          let EMin = parseFloat(input_EMin.value);
-          let EMax = parseFloat(input_EMax.value);
-          let ESteps = parseInt(input_nsteps.value);
+          let osc_curve = {
+            meta : {id : 0, name : "osc_curve" },
+            data : []
+          };
 
-          if(is_tmp){
-            ESteps = 100;
-          }
+          let EMin = 0;
+          let EMax = 5;
+          let ESteps = 1000;
 
           let EStep = (EMax-EMin)/ESteps;
 
-          let baseline = parseFloat(input_baseline.value);
+          let baseline = 1300;
 
           for(let i = 0; i < ESteps; ++i){
-            EVect[i] = EMin + i*EStep;
-            bp.SetEnergy(EVect[i]);
+            let p = [];
+            p[0] = EMin + i*EStep;
+            bp.SetEnergy(p[0]);
             bp.propagateLinear(1,baseline, 3.3);
-            PrbVect[i] = bp.GetProb(nufrom, nuto);
-          }
-
-          var prob_curve = {
-            x: EVect,
-            y: PrbVect,
-            type: 'line'
-          };
-
-          if(have_tmp){
-            Plotly.deleteTraces('OscProbPlot', -1);
-          }
-
-          layout = {
-            xaxis: { title: '$E_{nu} (\textrm{GeV})$' },
-            yaxis: { title: '$P_{\textrm{Osc.}}$' }
-          };
-
-          if(!is_tmp){
-            Series[nseries] = prob_curve;
-            nseries = nseries + 1;
-
-            if(!plot_initialized){
-              Plotly.newPlot('OscProbPlot', { data: Series, layout: layout} );
-              plot_initialized = true;
-            } else {
-              Plotly.react('OscProbPlot', { data: Series, layout: layout} );
+            p[1] = bp.GetProb(nufrom, nuto);
+            if(!isNaN(p[1])){
+              osc_curve.data.push(p);
             }
-            have_tmp = false;
+          }
+
+          if(is_tmp){
+            plot.AddTmp(osc_curve);
           } else {
-            prob_curve.name = "newprob";
-            Plotly.addTraces('OscProbPlot', prob_curve);
-            have_tmp = true;
+            plot.AddCurve(osc_curve);
           }
 
         }
 
         function OscProbInit(){
-          input_ssqt13 = document.getElementById("ssqt13");
-          input_baseline = document.getElementById("baseline");
-          input_dm23 = document.getElementById("dm23");
-          input_ssqt23 = document.getElementById("ssqt23");
 
-          input_from_pdg = document.getElementById("from_pdg");
-          input_to_pdg = document.getElementById("to_pdg");
+          let op_el = document.getElementById("OscProbPlot");
+          var op_plot = new OscProbPlot();
+          op_plot.DrawAxes(op_el);
 
-          input_EMin = document.getElementById("EMin");
-          input_EMax = document.getElementById("EMax");
-          input_nsteps = document.getElementById("nsteps");
-
-          AddPlot();
-
-          document.getElementById("reset_btn").onclick =
-            function () {
-              ClearPlot(); AddPlot(false);
-            };
           document.getElementById("add_btn").onclick =
-            function () { AddPlot(false); };
-          document.getElementById("clear_btn").onclick = ClearPlot;
-
-          function AddTmp() {
-            AddPlot(true);
-          };
-
-          input_ssqt13.onchange = AddTmp;
-          input_baseline.onchange = AddTmp;
-          input_dm23.onchange = AddTmp;
-          input_ssqt23.onchange = AddTmp;
-          input_from_pdg.onchange = AddTmp;
-          input_to_pdg.onchange = AddTmp;
-          input_EMin.onchange = AddTmp;
-          input_EMax.onchange = AddTmp;
-          input_nsteps.onchange = AddTmp;
+            function(){AddCurve(op_plot, op, false);};
+          document.getElementById("clear_btn").onclick =
+            function(){op_plot.ClearAll();};
 
           let cc = document.getElementById("ConstraintControls");
-
           var ce = new ConstraintElements();
-          ce.Initialize(cc);
+          ce.Initialize(cc, function(changed_params) {
+            console.log(changed_params);
+            Object.keys(changed_params).forEach(function(param) {
+              op.Set(param, changed_params[param]);
+            });
+            AddCurve(op_plot,op,true);
+          }
+          );
 
         }
         window.onload = OscProbInit;
+
+
   </script>
 
 </head>
@@ -171,53 +107,15 @@
 
   <div class="container-fluid">
     <div class="row">
-      <div class="col-8">
-        <div id="OscProbPlot" style="width:100%;height:60%;"></div>
-      </div>
+      <div id="OscProbPlot" class="col-12" />
     </div>
     <div class="row">
-      <div id="ConstraintControls" class="col-8">
+      <div id="ConstraintControls" class="col-12" />
+    </div>
+    <div class="row">
+      <input id="add_btn" type="button" value="Add" />
+      <input id="clear_btn" type="button" value="Clear" />
     </div>
   </div>
-
-  <div>
-    <p>Delta|M_23|^2</p>
-    <input id="dm23" type="text" value="2.539E-3" />
-  </div>
-  <div>
-    <p>sin^2(theta_23)</p>
-    <input id="ssqt23" type="text" value="0.534" />
-  </div>
-  <div>
-    <p>sin^2(theta_13)</p>
-    <input id="ssqt13" type="text" value="0.0214" />
-  </div>
-  <div>
-    <p>Baseline (km)</p>
-    <input id="baseline" type="text" value="1300" />
-  </div>
-  <div>
-    <p>EMin (GeV)</p>
-    <input id="EMin" type="text" value="0" />
-  </div>
-  <div>
-    <p>EMax (GeV)</p>
-    <input id="EMax" type="text" value="5" />
-  </div>
-  <div>
-    <p>Number of points</p>
-    <input id="nsteps" type="text" value="1000" />
-  </div>
-  <div>
-    <p>From PDG</p>
-    <input id="from_pdg" type="text" value="14" />
-  </div>
-  <div>
-    <p>To PDG</p>
-    <input id="to_pdg" type="text" value="14" />
-  </div>
-  <input id="reset_btn" type="button" value="Replace" />
-  <input id="add_btn" type="button" value="Add" />
-  <input id="clear_btn" type="button" value="Clear" />
 </body>
 </html>

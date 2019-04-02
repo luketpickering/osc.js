@@ -1,9 +1,44 @@
-class OPCons {
+class OscParams {
+  constructor() {
+    this.S2Th12 = 0.297;
+    this.S2Th13 = 0.0214;
+    this.S2Th23 = 0.534;
+
+    this.Dm2_21 = 7.37E-5;
+    this.Dm2_Atm = 2.539E-3;
+
+    this.dcp = 0;
+
+    this.from_pdg = 14;
+    this.to_pdg = 14;
+  }
+
+  Set(name, value){
+    if (name === "dm32") {
+      this.Dm2_Atm = value;
+    } else if (name === "ssth23") {
+      this.S2Th23 = value;
+    } else if (name === "ssth12") {
+      this.S2Th12 = value;
+    } else if (name === "dcp") {
+      this.dcp = value;
+    }
+  }
+};
+
+class OPContour {
   constructor(namef, xpointsf, ypointsf) {
     this.name = namef;
     this.x = xpointsf;
     this.y = ypointsf;
-    this.type = "line";
+  }
+
+  GetPointList() {
+    let data = [];
+    for (let it = 0; it < this.x.length; it++) {
+      data.push([ this.x[it], this.y[it] ]);
+    }
+    return data;
   }
 };
 
@@ -25,7 +60,7 @@ class OscProbConstraints {
     if (!(yaxf in this.Constraints[xaxf])) {
       this.Constraints[xaxf][yaxf] = [];
     }
-    this.Constraints[xaxf][yaxf].push(new OPCons(namef, xpointsf, ypointsf));
+    this.Constraints[xaxf][yaxf].push(new OPContour(namef, xpointsf, ypointsf));
   }
 
   static IsValidAxis(axname) {
@@ -43,34 +78,33 @@ class OscProbConstraints {
 
   static GetAxisLabel(axname) {
     if (axname === "dm32") {
-      return '$\Delta{}\textrm{m}_{32}^{2}$';
+      return '$\\Delta{}\\textrm{m}_{32}^{2}$';
     } else if (axname === "ssth23") {
-      return '$sin^{2}(\theta_{23})$';
+      return '$sin^{2}(\\theta_{23})$';
     } else if (axname === "ssth12") {
-      return '$sin^{2}(\theta_{12})$';
+      return '$sin^{2}(\\theta_{12})$';
     } else if (axname === "dcp") {
-      return '$\delta_{\textsc{cp}}$';
+      return '$\\delta_{\\textsc{cp}}$';
     }
     return false;
   }
 
   GetConstraintData() {
-    let data = [];
+    let data = {};
     Object.keys(this.Constraints).forEach(function(key_x) {
       Object.keys(this.Constraints[key_x]).forEach(function(key_y) {
-        data.push({
-          data : this.Constraints[key_x][key_y],
-          layout : {
-            xaxis : {
-              title : OscProbConstraints.GetAxisLabel(key_x),
-              fixedrange : true
-            },
-            yaxis : {
-              title : OscProbConstraints.GetAxisLabel(key_y),
-              fixedrange : true
-            }
-          }
-        });
+        let constraints = this.Constraints[key_x][key_y];
+        let plotn = [ key_x + "_" + key_y ].join("");
+        if (!(plotn in data)) {
+          data[plotn] = [];
+        }
+
+        for (let cit = 0; cit < constraints.length; ++cit) {
+          data[plotn].push({
+            meta : {id : cit, name : constraints[cit].name},
+            data : constraints[cit].GetPointList()
+          });
+        }
       }, this);
     }, this);
     return data;
@@ -126,41 +160,105 @@ class ConstraintElements {
   };
 
   // Give it a div and it makes one plot per constraint.
-  Initialize(ele, callback) {
-    let new_node = document.createElement("div");
-    let mouseover_helper = document.createElement("p");
-    mouseover_helper.id = "mouseover_helper";
-    new_node.id = "nuconst_ssth23_dm32";
+  Initialize(ele, onchanged_callback) {
 
-    ele.appendChild(new_node);
-    ele.appendChild(mouseover_helper);
+    let constraint_axes = {
+      "ssth23_dm32" : {xmin : 0.4, xmax : 0.65, ymin : 2.2E-3, ymax : 2.7E-3},
+    };
 
-    new_node = document.getElementById("nuconst_ssth23_dm32");
-    mouseover_helper = document.getElementById("mouseover_helper");
+    Object.keys(constraint_axes).forEach(function(axname) {
+      let axprops = constraint_axes[axname];
+      let width = 400;
+      let height = 300;
+      let margin = {top : 20, right : 20, bottom : 75, left : 90};
+      let tot_width = width + margin.left + margin.right;
+      let tot_height = height + margin.top + margin.bottom;
 
-    Plotly.newPlot(new_node, this.ConstraintData.GetConstraintData()[0]);
+      let xScale = d3.scaleLinear()
+                       .domain([ axprops.xmin, axprops.xmax ]) // input
+                       .range([ 0, width ]);                   // output
 
-    var xaxis = new_node._fullLayout.xaxis;
-    var yaxis = new_node._fullLayout.yaxis;
-    var l = new_node._fullLayout.margin.l;
-    var t = new_node._fullLayout.margin.t;
+      let yScale = d3.scaleLinear()
+                       .domain([ axprops.ymin, axprops.ymax ]) // input
+                       .range([ height, 0 ]);                  // output
 
-    new_node.addEventListener('click', function(evt) {
-      console.log(this);
-      let bla = this.querySelector('svg');
-      console.log(bla);
-      console.log(Plotly.d3.mouse(bla));
-      // hacky solution because plotly will only give you the
-      // nearest point.
-      var xInDataCoord = xaxis.p2c(evt.x - l);
-      var yInDataCoord = yaxis.p2c(evt.y - t);
+      let line = d3.line()
+                     .x(function(d) { return xScale(d[0]); })
+                     .y(function(d) { return yScale(d[1]); })
+                     .curve(d3.curveNatural);
 
-      var xInDataCoord_raw = xaxis.p2c(evt.x);
-      var yInDataCoord_raw = yaxis.p2c(evt.y);
+      let svg = d3.select(ele)
+                    .append("svg")
+                    .attr("width", tot_width)
+                    .attr("height", tot_height)
+                    .append("g")
+                    .attr("transform",
+                          "translate(" + margin.left + "," + margin.top + ")");
 
-      mouseover_helper.innerHTML =
-          [ evt.x, evt.y, l, t, xInDataCoord, yInDataCoord ].join(", ");
-    });
+      let xaxis = svg.append("g")
+                      .attr("class", "x axis")
+                      .attr("transform", "translate(0," + height + ")")
+                      .call(d3.axisBottom(xScale).tickArguments([ 5 ]));
+
+      let xtitle_pretty = OscProbConstraints.GetAxisLabel(axname.split("_")[0]);
+
+      let xtitle = svg.append("text")
+                       .attr("class", "label")
+                       .attr("x", width * 0.9)
+                       .attr("y", tot_height * 0.9)
+                       .style("text-anchor", "middle")
+                       .text(xtitle_pretty);
+
+      svg.append("g")
+          .attr("class", "y axis")
+          .call(d3.axisLeft(yScale).tickArguments([ 5, "e" ]));
+
+      let ytitle_pretty = OscProbConstraints.GetAxisLabel(axname.split("_")[1]);
+
+      let ytitle = svg.append("text")
+                       .attr("class", "label")
+                       .attr("y", width * -0.14)
+                       .attr("transform", "rotate(-90)")
+                       .style("text-anchor", "middle")
+                       .text(ytitle_pretty);
+
+      let axcdata = this.ConstraintData.GetConstraintData()[axname];
+
+      for (let i = 0; i < axcdata.length; ++i) {
+        svg.append("path")
+            .attr("d",
+                  line(axcdata[i].data)) // 11. Calls the line generator
+            .attr("stroke", "blue")
+            .attr("stroke-width", 2)
+            .attr("fill", "none");
+      }
+
+      svg.append("rect")
+          .attr("class", "overlay")
+          .attr("width", width)
+          .attr("height", height)
+          .on("click", function() {
+            // Remove old current point markers
+            svg.selectAll(".cpoint").remove();
+
+            // Get x/y in axes coords
+            let coords = d3.mouse(this);
+            let xaxcoords = xScale.invert(coords[0]);
+            let yaxcoords = yScale.invert(coords[1]);
+
+            let params = {};
+            params[axname.split("_")[0]] = xaxcoords;
+            params[axname.split("_")[1]] = yaxcoords;
+
+            svg.append("circle")
+                .attr("class", "cpoint")
+                .attr("cx", xScale(xaxcoords))
+                .attr("cy", yScale(yaxcoords))
+                .attr("r", 3);
+
+            onchanged_callback(params);
+          });
+    }, this);
   };
 
   // Callback for setting new values

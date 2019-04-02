@@ -283,6 +283,10 @@ class mosc {
         dmMatVac[i][j] = mMat[i] - dmVacVac[j][0];
       }
     }
+
+    // console.log("dmMatMat: ", dmMatMat);
+    // console.log("dmMatVac: ", dmMatVac);
+
   }
 
   get_product(L, E, rho, Mix, dmMatVac, dmMatMat, antitype, product) {
@@ -722,6 +726,8 @@ class mosc3 {
     this.Ain[1][1][kReal] = 1.0;
     this.Ain[2][2][kReal] = 1.0;
 
+    // console.log(this);
+
   }
 
   get_oscillation_parameters(dm21f, dm32f, s12f, s23f, s31f, dcpf) {
@@ -1041,11 +1047,7 @@ class BargerPropagator {
         RawInputPsi[j][1] = 0.0;
       }
 
-      if (false /*kUseMassEigenstates*/) {
-        this.fmosc3.convert_from_mass_eigenstate(i + 1, NuFlavor, RawInputPsi);
-      } else {
-        RawInputPsi[i][0] = 1.0;
-      }
+      RawInputPsi[i][0] = 1.0;
 
       mosc3.multiply_complex_matvec(TransitionProduct, RawInputPsi, OutputPsi);
 
