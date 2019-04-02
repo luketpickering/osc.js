@@ -1,11 +1,18 @@
 <html>
 <head>
-  <!-- Plotly.js -->
-  <!-- <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> -->
-  <script src="plotly-latest.min.js"></script>
-  <script src="prob3.js"></script>
-
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>OscProb.js</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+  <!-- Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="prob3.js"></script>
+  <script src="OscProbConstraints.js"></script>
+
   <script type="text/javascript">
         var input_ssqt13;
         var input_baseline;
@@ -89,8 +96,8 @@
           }
 
           layout = {
-            xaxis: { title: "E_{nu} (GeV)" },
-            yaxis: { title: "P_{Osc.}" }
+            xaxis: { title: '$E_{nu} (\textrm{GeV})$' },
+            yaxis: { title: '$P_{\textrm{Osc.}}$' }
           };
 
           if(!is_tmp){
@@ -105,7 +112,7 @@
             }
             have_tmp = false;
           } else {
-            console.log(prob_curve);
+            prob_curve.name = "newprob";
             Plotly.addTraces('OscProbPlot', prob_curve);
             have_tmp = true;
           }
@@ -149,6 +156,11 @@
           input_EMax.onchange = AddTmp;
           input_nsteps.onchange = AddTmp;
 
+          let cc = document.getElementById("ConstraintControls");
+
+          var ce = new ConstraintElements();
+          ce.Initialize(cc);
+
         }
         window.onload = OscProbInit;
   </script>
@@ -156,7 +168,18 @@
 </head>
 
 <body>
-  <div id="OscProbPlot" style="width:90%;height:60%;"></div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-8">
+        <div id="OscProbPlot" style="width:100%;height:60%;"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div id="ConstraintControls" class="col-8">
+    </div>
+  </div>
+
   <div>
     <p>Delta|M_23|^2</p>
     <input id="dm23" type="text" value="2.539E-3" />
