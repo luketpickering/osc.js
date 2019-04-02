@@ -8,6 +8,9 @@
 
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
   <style type="text/css">
     .overlay {
@@ -31,10 +34,14 @@
         var bp = new BargerPropagator();
         var op = new OscParams();
 
+        var pdg_from = 14;
+        var pdg_to = 14;
+        var baseline_km = 1300;
+
         function AddCurve(plot, params, is_tmp) {
 
-          let nufrom = GetProb3NuTypeFromPDG(params.from_pdg);
-          let nuto = GetProb3NuTypeFromPDG(params.to_pdg);
+          let nufrom = GetProb3NuTypeFromPDG(pdg_from);
+          let nuto = GetProb3NuTypeFromPDG(pdg_to);
           if((nufrom === 0)||(nuto === 0)){
             return;
           }
@@ -52,13 +59,11 @@
 
           let EStep = (EMax-EMin)/ESteps;
 
-          let baseline = 1300;
-
           for(let i = 0; i < ESteps; ++i){
             let p = [];
             p[0] = EMin + i*EStep;
             bp.SetEnergy(p[0]);
-            bp.propagateLinear(1,baseline, 3.3);
+            bp.propagateLinear(1,baseline_km, 3.3);
             p[1] = bp.GetProb(nufrom, nuto);
             if(!isNaN(p[1])){
               osc_curve.data.push(p);
@@ -75,6 +80,8 @@
 
         function OscProbInit(){
 
+          op.InitializeTable(document.getElementById("param_table"));
+
           let op_el = document.getElementById("OscProbPlot");
           var op_plot = new OscProbPlot();
           op_plot.DrawAxes(op_el);
@@ -83,6 +90,8 @@
             function(){AddCurve(op_plot, op, false);};
           document.getElementById("clear_btn").onclick =
             function(){op_plot.ClearAll();};
+
+          AddCurve(op_plot, op, true);
 
           let cc = document.getElementById("ConstraintControls");
           var ce = new ConstraintElements();
@@ -95,6 +104,41 @@
           }
           );
 
+          d3.select("#neutrino_selector").selectAll("p").on("click",
+            function(){
+              let chosen = this.innerHTML;
+              d3.select(this.parentNode.parentNode).select("button").text(chosen);
+              let nutype = this.dataset.nutype;
+              if(nutype === "nu"){
+                pdg_from = Math.abs(pdg_from);
+                pdg_to = Math.abs(pdg_to);
+              } else if (nutype === "nubar"){
+                pdg_from = -Math.abs(pdg_from);
+                pdg_to = -Math.abs(pdg_to);
+              }
+              AddCurve(op_plot,op,true);
+            });
+          d3.select("#from_pdg_selector").selectAll("p").on("click",
+            function(){
+              let chosen = this.innerHTML;
+              d3.select(this.parentNode.parentNode).select("button").text(chosen);
+              pdg_from = parseInt(this.dataset.nupdg);
+              AddCurve(op_plot,op,true);
+            });
+          d3.select("#to_pdg_selector").selectAll("p").on("click",
+            function(){
+              let chosen = this.innerHTML;
+              d3.select(this.parentNode.parentNode).select("button").text(chosen);
+              pdg_to = parseInt(this.dataset.nupdg);
+              AddCurve(op_plot,op,true);
+            });
+            d3.select("#baseline_input").on('change',function(){
+              let chosen = parseFloat(this.value);
+              baseline_km = chosen;
+              AddCurve(op_plot,op,true);
+            });
+
+
         }
         window.onload = OscProbInit;
 
@@ -105,16 +149,72 @@
 
 <body>
 
-  <div class="container-fluid">
+  <div class="container">
     <div class="row">
-      <div id="OscProbPlot" class="col-12" />
+      <h1>Oscillation Probability</h1>
+      <div id="OscProbPlot" class="col-12"></div>
     </div>
     <div class="row">
-      <div id="ConstraintControls" class="col-12" />
+      <div class="col-12" >
+        <button id="add_btn" type="button" class="btn btn-primary">Add</button>
+        <button id="clear_btn" type="button" class="btn btn-primary">Clear</button>
+      </div>
     </div>
     <div class="row">
-      <input id="add_btn" type="button" value="Add" />
-      <input id="clear_btn" type="button" value="Clear" />
+      <h1>Oscillation Parameters</h1>
+      <div id="ConstraintControls" class="col-8"></div>
+    </div>
+    <div class="row">
+      <div class="col-8">
+        <table id="param_table" class="table table-bordered">
+          <thead>
+            <tr>
+              <th scope="col">Parameter</th>
+              <th scope="col">Value</th>
+            </tr>
+          </thead>
+          <tbody/>
+        </table>
+      </div>
+      <div class="col-8">
+        <div id="neutrino_selector" class="btn-group">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Neutrino
+          </button>
+          <div class="dropdown-menu">
+            <p data-nutype="nu" class="dropdown-item">Neutrino</p>
+            <p data-nutype="nubar" class="dropdown-item">Anti-Neutrino</p>
+          </div>
+        </div>
+        <div id="from_pdg_selector" class="btn-group">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Muon
+          </button>
+          <div class="dropdown-menu">
+            <p data-nupdg="12" class="dropdown-item">Electron</p>
+            <p data-nupdg="14" class="dropdown-item">Muon</p>
+            <p data-nupdg="16" class="dropdown-item">Tau</p>
+          </div>
+        </div>
+        <div id="to_pdg_selector" class="btn-group">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Muon
+          </button>
+          <div class="dropdown-menu">
+            <p data-nupdg="12" class="dropdown-item">Electron</p>
+            <p data-nupdg="14" class="dropdown-item">Muon</p>
+            <p data-nupdg="16" class="dropdown-item">Tau</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-8">
+        <div class="form-group">
+        <label for="Baseline">Experimental baseline in km</label>
+        <input type="email" class="form-control" id="baseline_input" placeholder="1300">
+        </div>
+      </div>
     </div>
   </div>
 </body>

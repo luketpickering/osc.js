@@ -8,21 +8,85 @@ class OscParams {
     this.Dm2_Atm = 2.539E-3;
 
     this.dcp = 0;
-
-    this.from_pdg = 14;
-    this.to_pdg = 14;
   }
 
-  Set(name, value){
+  static GetLatexName(name) {
+    if (name === "Dm2_Atm") {
+      return '$\\Delta{}\\textrm{m}_{32}^{2}$';
+    } else if (name === "Dm2_21") {
+      return '$\\Delta{}\\textrm{m}_{21}^{2}$';
+    } else if (name === "S2Th12") {
+      return '$sin^{2}(\\theta_{12})$';
+    } else if (name === "S2Th13") {
+      return '$sin^{2}(\\theta_{13})$';
+    } else if (name === "S2Th23") {
+      return '$sin^{2}(\\theta_{23})$';
+    } else if (name === "dcp") {
+      return '$\\delta_{\\textsc{cp}}$';
+    }
+    return false;
+  }
+
+  Set(name, value) {
     if (name === "dm32") {
       this.Dm2_Atm = value;
+      this.Dm2_Atm_tblval.text((value).toPrecision(3));
     } else if (name === "ssth23") {
       this.S2Th23 = value;
+      this.S2Th23_tblval.text((value).toPrecision(3));
     } else if (name === "ssth12") {
       this.S2Th12 = value;
+      this.S2Th12_tblval.text((value).toPrecision(3));
     } else if (name === "dcp") {
       this.dcp = value;
+      this.dcp_tblval.text((value).toPrecision(3));
     }
+  }
+
+  InitializeTable(el) {
+    let tbl_body = d3.select(el).select("tbody");
+
+    this.S2Th12_row = tbl_body.append("tr");
+    this.S2Th12_row.append("th")
+        .attr("scope", "row")
+        .text(OscParams.GetLatexName("S2Th12"));
+    this.S2Th12_tblval =
+        this.S2Th12_row.append("tr").attr("scope", "row").text(this.S2Th12);
+
+    this.S2Th13_row = tbl_body.append("tr");
+    this.S2Th13_row.append("th")
+        .attr("scope", "row")
+        .text(OscParams.GetLatexName("S2Th13"));
+    this.S2Th13_tblval =
+        this.S2Th13_row.append("tr").attr("scope", "row").text(this.S2Th13);
+
+    this.S2Th23_row = tbl_body.append("tr");
+    this.S2Th23_row.append("th")
+        .attr("scope", "row")
+        .text(OscParams.GetLatexName("S2Th23"));
+    this.S2Th23_tblval =
+        this.S2Th23_row.append("tr").attr("scope", "row").text(this.S2Th23);
+
+    this.Dm2_Atm_row = tbl_body.append("tr");
+    this.Dm2_Atm_row.append("th")
+        .attr("scope", "row")
+        .text(OscParams.GetLatexName("Dm2_Atm"));
+    this.Dm2_Atm_tblval =
+        this.Dm2_Atm_row.append("tr").attr("scope", "row").text(this.Dm2_Atm);
+
+    this.Dm2_21_row = tbl_body.append("tr");
+    this.Dm2_21_row.append("th")
+        .attr("scope", "row")
+        .text(OscParams.GetLatexName("Dm2_21"));
+    this.Dm2_21_tblval =
+        this.Dm2_21_row.append("tr").attr("scope", "row").text(this.Dm2_21);
+
+    this.dcp_row = tbl_body.append("tr");
+    this.dcp_row.append("th")
+        .attr("scope", "row")
+        .text(OscParams.GetLatexName("dcp"));
+    this.dcp_tblval =
+        this.dcp_row.append("tr").attr("scope", "row").text(this.dcp);
   }
 };
 

@@ -23,8 +23,7 @@ class OscProbPlot {
 
     this.lineGen = d3.line()
                        .x(function(d) { return xScale(d[0]); })
-                       .y(function(d) { return yScale(d[1]); })
-                       .curve(d3.curveNatural);
+                       .y(function(d) { return yScale(d[1]); });
 
     this.svg = d3.select(el)
                    .append("svg")
@@ -71,6 +70,9 @@ class OscProbPlot {
   ClearAll() {
     for (let i = 0; i < this.Curves.length; ++i) {
       this.Curves[i].remove();
+    }
+    if (this.tmp != undefined) {
+      this.tmp.remove();
     }
   }
 
