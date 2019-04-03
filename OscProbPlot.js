@@ -1,3 +1,22 @@
+function RenderLabel(text_d3, svg_d3, xwidth, ywidth, xoffset, yoffset,
+                     xscale = 1, yscale = 1, rotate = 0) {
+
+  MathJax.Hub.setRenderer("SVG");
+  MathJax.Hub.Queue([ "Typeset", MathJax.Hub, text_d3.node() ]);
+  MathJax.Hub.Queue([ function() {
+    let jax_svg = text_d3.select('span>svg');
+
+    svg_d3.append("foreignObject")
+        .attr("y", yoffset)
+        .attr("x", xoffset)
+        .attr("transform", `rotate(${rotate}) scale(${xscale},${yscale})`)
+        .attr("width", xwidth)
+        .attr("height", ywidth)
+        .append(() => { return jax_svg.node(); });
+    text_d3.remove();
+  } ]);
+}
+
 class OscProbPlot {
   constructor() {
     this.Curves = [];
@@ -34,29 +53,20 @@ class OscProbPlot {
                    .attr("transform", "translate(" + this.margin.left + "," +
                                           this.margin.top + ")");
 
-    this.xaxis = this.svg.append("g")
-                     .attr("class", "x axis")
-                     .attr("transform", "translate(0," + this.height + ")")
-                     .call(d3.axisBottom(xScale).tickArguments([ 5 ]));
+    this.svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + this.height + ")")
+        .call(d3.axisBottom(xScale).tickArguments([ 5 ]));
 
-    this.xtitle = this.svg.append("text")
-                      .attr("class", "label")
-                      .attr("x", this.width * 0.8)
-                      .attr("y", this.tot_height * 0.9)
-                      .style("text-anchor", "middle")
-                      .text("$E_{\\nu} \\textrm{(GeV)}$");
+    RenderLabel(this.svg.append("text").text("\\(E_{\\nu} \\textrm{(GeV)}\\)"),
+                this.svg, "25ex", "10ex", this.width*0.4,this.height*0.7, 1.5, 1.5);
 
-    this.yaxis = this.svg.append("g")
-                     .attr("class", "y axis")
-                     .call(d3.axisLeft(yScale).tickArguments([ 5 ]));
+    this.svg.append("g")
+        .attr("class", "y axis")
+        .call(d3.axisLeft(yScale).tickArguments([ 5 ]));
 
-    this.ytitle = this.svg.append("text")
-                      .attr("class", "label")
-                      .attr("y", this.width * -0.1)
-                      .attr("x", this.height * -0.25)
-                      .attr("transform", "rotate(-90)")
-                      .style("text-anchor", "middle")
-                      .text("$P_{\\textrm{osc.}}$");
+    RenderLabel(this.svg.append("text").text("\\(P_{\\textrm{osc.}}\\)"),
+                this.svg, "25ex", "10ex", -50,-60, 1.5, 1.5, -90);
   }
 
   ScrubCurve(curve) {
