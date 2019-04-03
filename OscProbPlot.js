@@ -75,6 +75,7 @@ class OscProbPlot {
                       .attr("class", "tooltip")
                       .style("opacity", 0);
     tooltip.html(tool_tip_html);
+    MathJax.Hub.Queue([ "Typeset", MathJax.Hub, tooltip.node() ]);
 
     this.Curves.push({
       path : this.svg.append("path")
@@ -96,7 +97,7 @@ class OscProbPlot {
     });
   };
 
-  RemoveNext(){
+  RemoveNext() {
     if (this.next != undefined) {
       this.next.path.remove();
       this.next.tooltip.remove();
@@ -120,6 +121,7 @@ class OscProbPlot {
                       .attr("class", "tooltip")
                       .style("opacity", 0);
     tooltip.html(tool_tip_html);
+    MathJax.Hub.Queue([ "Typeset", MathJax.Hub, tooltip.node() ]);
 
     this.next = {
       path : this.svg.append("path")
@@ -128,7 +130,6 @@ class OscProbPlot {
                  .attr("class", "osc_line osc_next")
                  .on("mouseover",
                      function() {
-                       console.log("over");
                        tooltip.transition().duration(200).style("opacity", .9);
                        tooltip.style("left", (d3.event.pageX) + "px")
                            .style("top", (d3.event.pageY - 28) + "px");

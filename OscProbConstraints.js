@@ -1,22 +1,22 @@
 function GetNuName(nu_pdg) {
   switch (nu_pdg) {
   case -12: {
-    return "anti-electron";
+    return "\\(\\bar{\\nu_{e}}\\)";
   }
   case -14: {
-    return "anti-muon";
+    return "\\(\\bar{\\nu_{\\mu}}\\)";
   }
   case -16: {
-    return "anti-tau";
+    return "\\(\\bar{\\nu_{\\tau}}\\)";
   }
   case 12: {
-    return "electron";
+    return "\\(\\nu_{e}\\)";
   }
   case 14: {
-    return "muon";
+    return "\\(\\nu_{\\mu}\\)";
   }
   case 16: {
-    return "tau";
+    return "\\(\\nu_{\\tau}\\)";
   }
   }
 }
@@ -48,17 +48,17 @@ class OscParams {
 
   static GetLatexName(name) {
     if (name === "Dm2_Atm") {
-      return '$\\Delta{}\\textrm{m}_{32}^{2}$';
+      return '\\(\\Delta{}\\textrm{m}_{32}^{2}\\)';
     } else if (name === "Dm2_21") {
-      return '$\\Delta{}\\textrm{m}_{21}^{2}$';
+      return '\\(\\Delta{}\\textrm{m}_{21}^{2}\\)';
     } else if (name === "S2Th12") {
-      return '$sin^{2}(\\theta_{12})$';
+      return '\\(\\sin^{2}(\\theta_{12})\\)';
     } else if (name === "S2Th13") {
-      return '$sin^{2}(\\theta_{13})$';
+      return '\\(\\sin^{2}(\\theta_{13})\\)';
     } else if (name === "S2Th23") {
-      return '$sin^{2}(\\theta_{23})$';
+      return '\\(\\sin^{2}(\\theta_{23})\\)';
     } else if (name === "dcp") {
-      return '$\\delta_{\\textsc{cp}}$';
+      return '\\(\\delta_{\\rm {\\small cp}}\\)';
     }
     return false;
   }
@@ -67,7 +67,7 @@ class OscParams {
     if (name === "Dm2_Atm") {
       this.Dm2_Atm = value;
       if (this.tbl_el != undefined) {
-        this.Dm2_Atm_tblval.text((value).toPrecision(3));
+        this.Dm2_Atm_tblval.text((value).toExponential(3));
       }
     } else if (name === "S2Th23") {
       this.S2Th23 = value;
@@ -77,7 +77,7 @@ class OscParams {
     } else if (name === "S2Th13") {
       this.S2Th13 = value;
       if (this.tbl_el != undefined) {
-        this.S2Th13_tblval.text((value).toPrecision(3));
+        this.S2Th13_tblval.text((value).toExponential(3));
       }
     } else if (name === "dcp") {
       this.dcp = value;
@@ -110,9 +110,9 @@ class OscParams {
       `<div>${OscParams.GetLatexName("S2Th23")}: ${
           this.S2Th23.toPrecision(3)}</div>`,
       `<div>${OscParams.GetLatexName("Dm2_21")}: ${
-          this.Dm2_21.toExponential(3)}</div>`,
+          this.Dm2_21.toExponential(3)} eV</div>`,
       `<div>${OscParams.GetLatexName("Dm2_Atm")}: ${
-          this.Dm2_Atm.toExponential(3)}</div>`,
+          this.Dm2_Atm.toExponential(3)} eV</div>`,
       `<div>${OscParams.GetLatexName("dcp")}: ${this.dcp.toPrecision(3)}</div>`,
     ].join("");
   }
@@ -169,15 +169,17 @@ class OscParams {
                           .text(this.dcp.toPrecision(3));
 
     this.tbl_el = tbl_body.node();
+    MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.tbl_el]);
   }
 };
 
 class OPContour {
-  constructor(namef, xpointsf, ypointsf, lineclassf) {
+  constructor(namef, xpointsf, ypointsf, lineclassf, tool_tip_htmlf) {
     this.name = namef;
     this.x = xpointsf;
     this.y = ypointsf;
     this.lineclass = lineclassf;
+    this.tool_tip_html = tool_tip_htmlf;
   }
 
   GetPointList() {
@@ -196,7 +198,7 @@ class OscProbConstraints {
   constructor() { this.Constraints = {}; }
 
   AddConstraint(namef, xaxf, yaxf, xpointsf, ypointsf,
-                lineclass = "constraint_line") {
+                lineclass = "constraint_line", tool_tip_html = undefined) {
     if (!OscProbConstraints.IsValidAxis(xaxf)) {
       console.log(`Failed to add constraint with invalid axis name: ${xaxf}`);
       return;
@@ -212,7 +214,7 @@ class OscProbConstraints {
       this.Constraints[xaxf][yaxf] = [];
     }
     this.Constraints[xaxf][yaxf].push(
-        new OPContour(namef, xpointsf, ypointsf, lineclass));
+        new OPContour(namef, xpointsf, ypointsf, lineclass, tool_tip_html));
   }
 
   static IsValidAxis(axname) {
@@ -243,6 +245,7 @@ class OscProbConstraints {
             meta : {
               id : cit,
               name : constraints[cit].name,
+              tool_tip_html : constraints[cit].tool_tip_html,
               lineclass : constraints[cit].lineclass
             },
             data : constraints[cit].GetPointList()
@@ -351,60 +354,68 @@ class ConstraintPlot {
         .style("text-anchor", "middle")
         .text(this.yAxis.title);
 
-    for (let ci = 0; ci < this.ConstraintData.length; ++ci) {
-      for (let pi = 0; pi < this.ConstraintData[ci].data.length; ++pi) {
-        this.svg.append("path")
-            .attr("d",
-                  this.lineGen(this.ConstraintData[ci]
-                                   .data[pi])) // 11. Calls the line generator
-            .attr("class", this.ConstraintData[ci].meta.lineclass);
-      }
-    }
-
     let xAxis_name = this.xAxis.name;
     let yAxis_name = this.yAxis.name;
+
+    function clickHandler() {
+      // Get x/y in axes coords
+      let coords = d3.mouse(this);
+      let xaxcoords = xScale.invert(coords[0]);
+      let yaxcoords = yScale.invert(coords[1]);
+
+      let params = new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
+
+      onchanged_callback(params);
+    };
+
+    function hoverHandler() {
+      // Get x/y in axes coords
+      let coords = d3.mouse(this);
+      let xaxcoords = xScale.invert(coords[0]);
+      let yaxcoords = yScale.invert(coords[1]);
+
+      let params = new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
+
+      on_hover_callback(params);
+    };
 
     this.svg.append("rect")
         .attr("class", "overlay")
         .attr("width", width)
         .attr("height", height)
-        .on("click",
-            function() {
-              // Get x/y in axes coords
-              let coords = d3.mouse(this);
-              let xaxcoords = xScale.invert(coords[0]);
-              let yaxcoords = yScale.invert(coords[1]);
+        .on("click", clickHandler);
+    // Disable hover for now.
+    // .on("mousemove", hoverHandler)
+    // .on("touchmove", hoverHandler)
+    // .on("mouseout", function() { off_hover_callback(); });
 
-              let params =
-                  new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
+    let tooltip = d3.select("body")
+                      .append("div")
+                      .attr("class", "tooltip")
+                      .style("opacity", 0);
 
-              onchanged_callback(params);
-            })
-        .on("mousemove",
-            function() {
-              // Get x/y in axes coords
-              let coords = d3.mouse(this);
-              let xaxcoords = xScale.invert(coords[0]);
-              let yaxcoords = yScale.invert(coords[1]);
-
-              let params =
-                  new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
-
-              on_hover_callback(params);
-            })
-        .on("touchmove",
-            function() {
-              // Get x/y in axes coords
-              let coords = d3.mouse(this);
-              let xaxcoords = xScale.invert(coords[0]);
-              let yaxcoords = yScale.invert(coords[1]);
-
-              let params =
-                  new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
-
-              on_hover_callback(params);
-            })
-        .on("mouseout", function() { off_hover_callback(); });
+    for (let ci = 0; ci < this.ConstraintData.length; ++ci) {
+      for (let pi = 0; pi < this.ConstraintData[ci].data.length; ++pi) {
+        let tool_tip_html = this.ConstraintData[ci].meta.tool_tip_html;
+        let path = this.svg.append("path")
+                       .attr("d",
+                             this.lineGen(
+                                 this.ConstraintData[ci]
+                                     .data[pi])) // 11. Calls the line generator
+                       .attr("class", this.ConstraintData[ci].meta.lineclass)
+                       .on("click", clickHandler);
+        if (tool_tip_html != undefined) {
+          path.on("mouseover", function() {
+                tooltip.transition().duration(200).style("opacity", .9);
+                tooltip.style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px")
+                    .html(tool_tip_html);
+              }).on("mouseout", function() {
+            tooltip.transition().duration(500).style("opacity", 0);
+          });
+        }
+      }
+    }
   };
 
   // Callback for setting new values
@@ -415,20 +426,24 @@ function GetConstraintData() {
   ConstraintData.AddConstraint(
       "T2K2018_68", "S2Th23", "Dm2_Atm", T2K2018_S2Th23_Dm2_Atm_68.S2Th23,
       T2K2018_S2Th23_Dm2_Atm_68.Dm2_Atm,
-      "constraint_line constraint_inner T2KConstraint");
+      "constraint_line constraint_inner T2KConstraint",
+      "<div>Expt: T2K</div><div>Year: 2018</div><div>Ref: PRL 121 171802</div>");
   ConstraintData.AddConstraint(
       "T2K2018_90", "S2Th23", "Dm2_Atm", T2K2018_S2Th23_Dm2_Atm_90.S2Th23,
       T2K2018_S2Th23_Dm2_Atm_90.Dm2_Atm,
-      "constraint_line constraint_outer T2KConstraint");
+      "constraint_line constraint_outer T2KConstraint",
+      "<div>Expt: T2K</div><div>Year: 2018</div><div>Ref: PRL 121 171802</div>");
 
   ConstraintData.AddConstraint(
       "T2K2018_68", "S2Th13", "dcp", T2K2018_S2Th13_dcp_68.S2Th13,
       T2K2018_S2Th13_dcp_68.dcp,
-      "constraint_line constraint_inner T2KConstraint");
+      "constraint_line constraint_inner T2KConstraint",
+      "<div>Expt: T2K</div><div>Year: 2018</div><div>Ref: PRL 121 171802</div>");
   ConstraintData.AddConstraint(
       "T2K2018_90", "S2Th13", "dcp", T2K2018_S2Th13_dcp_90.S2Th13,
       T2K2018_S2Th13_dcp_90.dcp,
-      "constraint_line constraint_outer T2KConstraint");
+      "constraint_line constraint_outer T2KConstraint",
+      "<div>Expt: T2K</div><div>Year: 2018</div><div>Ref: PRL 121 171802</div>");
 
   return ConstraintData.GetConstraintData();
 }

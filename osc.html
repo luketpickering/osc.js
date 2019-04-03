@@ -46,8 +46,7 @@
     div.tooltip {
       position: absolute;
       text-align: left;
-      /* width: 150px; */
-      /* height: 300px; */
+      width: 15em;
       padding: 5px;
       font: 12px sans-serif;
       background: lightsteelblue;
@@ -55,12 +54,19 @@
       border-radius: 8px;
       pointer-events: none;
     }
-    .tooltip span {
-      width: 100%;
-    }
   </style>
 
   <!-- MathJax -->
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      jax: ["input/TeX","output/SVG"],
+      extensions: [],
+      TeX: {
+        extensions: ["noErrors.js","noUndefined.js"]
+      },
+      skipStartupTypeset: true
+    });
+  </script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
 
   <!-- d3.js -->
