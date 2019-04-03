@@ -1,7 +1,7 @@
 class OscProbPlot {
   constructor() {
     this.Curves = [];
-    this.tmp = undefined;
+    this.next = undefined;
   }
 
   DrawAxes(el, xmin_GeV = 0, xmax_GeV = 10, ymin = 0, ymax = 1) {
@@ -63,29 +63,41 @@ class OscProbPlot {
         this.svg.append("path")
             .attr("d",
                   this.lineGen(curve.data)) // 11. Calls the line generator
-            .attr("stroke", "blue")
-            .attr("stroke-width", 2)
-            .attr("fill", "none"));
+            .attr("class", "osc_line"));
   };
+
   ClearAll() {
     for (let i = 0; i < this.Curves.length; ++i) {
       this.Curves[i].remove();
     }
-    if (this.tmp != undefined) {
-      this.tmp.remove();
+    if (this.next != undefined) {
+      this.next.remove();
     }
   }
 
-  AddTmp(curve) {
-    if (this.tmp != undefined) {
-      this.tmp.remove();
+  ShowNext(curve) {
+    if (this.next != undefined) {
+      this.next.remove();
     }
-    this.tmp =
+    this.next =
         this.svg.append("path")
             .attr("d",
                   this.lineGen(curve.data)) // 11. Calls the line generator
-            .attr("stroke", "red")
-            .attr("stroke-width", 2)
-            .attr("fill", "none");
+            .attr("class", "osc_line osc_next");
+  }
+  AddHover(curve) {
+    if (this.hvr != undefined) {
+      this.hvr.remove();
+    }
+    this.hvr =
+        this.svg.append("path")
+            .attr("d",
+                  this.lineGen(curve.data)) // 11. Calls the line generator
+            .attr("class", "osc_line osc_hover");
+  }
+  RemoveHover() {
+    if (this.hvr != undefined) {
+      this.hvr.remove();
+    }
   }
 };

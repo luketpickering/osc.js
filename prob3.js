@@ -701,19 +701,19 @@ class mosc3 {
     }
 
     this.dm21 = 0;
-    this.dm32 = 0;
+    this.Dm2_Atm = 0;
     this.s12 = 0;
     this.s23 = 0;
     this.s31 = 0;
     this.dcp = 0;
   }
 
-  init_mixing_matrix(dm21f, dm32f, s12f, s23f, s31f, dcpf) {
+  init_mixing_matrix(dm21f, Dm2_Atmf, s12f, s23f, s31f, dcpf) {
 
     this.reset();
 
     this.dm21 = dm21f;
-    this.dm32 = dm32f;
+    this.Dm2_Atm = Dm2_Atmf;
     this.s12 = s12f;
     this.s23 = s23f;
     this.s31 = s31f;
@@ -721,7 +721,7 @@ class mosc3 {
 
     this.fmosc.setMatterFlavor(nue_type);
     this.fmosc.setmix_sin(this.s12, this.s23, this.s31, this.dcp, this.mix);
-    this.fmosc.setmass(this.dm21, this.dm32, this.dm);
+    this.fmosc.setmass(this.dm21, this.Dm2_Atm, this.dm);
     this.Ain[0][0][kReal] = 1.0;
     this.Ain[1][1][kReal] = 1.0;
     this.Ain[2][2][kReal] = 1.0;
@@ -730,9 +730,9 @@ class mosc3 {
 
   }
 
-  get_oscillation_parameters(dm21f, dm32f, s12f, s23f, s31f, dcpf) {
+  get_oscillation_parameters(dm21f, Dm2_Atmf, s12f, s23f, s31f, dcpf) {
     dm21f[0] = this.dm21;
-    dm32f[0] = this.dm32;
+    Dm2_Atmf[0] = this.Dm2_Atm;
     s12f[0] = this.s12;
     s23f[0] = this.s23;
     s31f[0] = this.s31;
@@ -743,7 +743,7 @@ class mosc3 {
    *   return oscillation length of delta M^23 sector
    */
   get_wavelength_23(energy, lambda23) {
-    lambda23[0] = 2.480 * (energy) / Math.abs(this.dm32);
+    lambda23[0] = 2.480 * (energy) / Math.abs(this.Dm2_Atm);
   }
 
   /*
@@ -904,8 +904,8 @@ class mosc3 {
     // make more precise 20081003 rvw
     lovere = 1.26693281 * (path) / (energy);
     s21 = Math.sin(dm21 * lovere);
-    s32 = Math.sin(dm32 * lovere);
-    s31 = Math.sin((dm21 + dm32) * lovere);
+    s32 = Math.sin(Dm2_Atm * lovere);
+    s31 = Math.sin((dm21 + Dm2_Atm) * lovere);
     ss21 = s21 * s21;
     ss32 = s32 * s32;
     ss31 = s31 * s31;

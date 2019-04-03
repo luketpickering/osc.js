@@ -8,6 +8,8 @@ class OscParams {
     this.Dm2_Atm = 2.539E-3;
 
     this.dcp = 0;
+
+    this.tbl_el = undefined;
   }
 
   Copy() {
@@ -18,6 +20,7 @@ class OscParams {
     rtn.Dm2_21 = this.Dm2_21;
     rtn.Dm2_Atm = this.Dm2_Atm;
     rtn.dcp = this.dcp;
+    return rtn;
   }
 
   static GetLatexName(name) {
@@ -40,16 +43,24 @@ class OscParams {
   Set(name, value) {
     if (name === "Dm2_Atm") {
       this.Dm2_Atm = value;
-      this.Dm2_Atm_tblval.text((value).toPrecision(3));
+      if (this.tbl_el != undefined) {
+        this.Dm2_Atm_tblval.text((value).toPrecision(3));
+      }
     } else if (name === "S2Th23") {
       this.S2Th23 = value;
-      this.S2Th23_tblval.text((value).toPrecision(3));
+      if (this.tbl_el != undefined) {
+        this.S2Th23_tblval.text((value).toPrecision(3));
+      }
     } else if (name === "S2Th13") {
       this.S2Th13 = value;
-      this.S2Th13_tblval.text((value).toPrecision(3));
+      if (this.tbl_el != undefined) {
+        this.S2Th13_tblval.text((value).toPrecision(3));
+      }
     } else if (name === "dcp") {
       this.dcp = value;
-      this.dcp_tblval.text((value).toPrecision(3));
+      if (this.tbl_el != undefined) {
+        this.dcp_tblval.text((value).toPrecision(3));
+      }
     }
   }
   Get(name) {
@@ -108,6 +119,8 @@ class OscParams {
         .text(OscParams.GetLatexName("dcp"));
     this.dcp_tblval =
         this.dcp_row.append("tr").attr("scope", "row").text(this.dcp);
+
+    this.tbl_el = tbl_body.node();
   }
 };
 
@@ -309,31 +322,31 @@ class ConstraintPlot {
         .attr("class", "overlay")
         .attr("width", width)
         .attr("height", height)
-        .on({
-          "click" : function() {
-            // Get x/y in axes coords
-            let coords = d3.mouse(this);
-            let xaxcoords = xScale.invert(coords[0]);
-            let yaxcoords = yScale.invert(coords[1]);
+        .on("click",
+            function() {
+              // Get x/y in axes coords
+              let coords = d3.mouse(this);
+              let xaxcoords = xScale.invert(coords[0]);
+              let yaxcoords = yScale.invert(coords[1]);
 
-            let params =
-                new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
+              let params =
+                  new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
 
-            onchanged_callback(params);
-          },
-          "" : function() {
-            // Get x/y in axes coords
-            let coords = d3.mouse(this);
-            let xaxcoords = xScale.invert(coords[0]);
-            let yaxcoords = yScale.invert(coords[1]);
+              onchanged_callback(params);
+            })
+        .on("mousemove",
+            function() {
+              // Get x/y in axes coords
+              let coords = d3.mouse(this);
+              let xaxcoords = xScale.invert(coords[0]);
+              let yaxcoords = yScale.invert(coords[1]);
 
-            let params =
-                new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
+              let params =
+                  new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
 
-            on_hover_callback(params);
-          }
-          "mouseout" : function() { off_hover_callback(); }
-        });
+              on_hover_callback(params);
+            })
+        .on("mouseout", function() { off_hover_callback(); });
   };
 
   // Callback for setting new values

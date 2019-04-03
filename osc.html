@@ -17,6 +17,31 @@
       fill: none;
       pointer-events: all;
     }
+    .osc_line {
+      stroke: blue;
+      stroke-width: 2;
+      fill: none;
+    }
+    .osc_next {
+      stroke: red;
+    }
+    .osc_hover {
+      stroke: green;
+      stroke-dasharray: 5,5;
+    }
+    .constraint_line {
+      stroke: blue;
+      stroke-width: 2;
+      fill: none;
+    }
+    .constraint_inner {
+      stroke-dasharray: 5,5;
+    }
+    .constraint_outer {
+    }
+    .T2KConstraint {
+      stroke: red;
+    }
   </style>
 
   <!-- MathJax -->
@@ -26,6 +51,7 @@
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <!-- Local code -->
   <script src="prob3.js"></script>
+  <script src="Constraint.data.js"></script>
   <script src="OscProbConstraints.js"></script>
   <script src="OscProbPlot.js"></script>
 
@@ -38,7 +64,7 @@
         var pdg_to = 14;
         var baseline_km = 1300;
 
-        function AddCurve(plot, params, is_tmp) {
+        function AddCurve(plot, params, curve_state=0) {
 
           let nufrom = GetProb3NuTypeFromPDG(pdg_from);
           let nuto = GetProb3NuTypeFromPDG(pdg_to);
@@ -70,8 +96,10 @@
             }
           }
 
-          if(is_tmp){
-            plot.AddTmp(osc_curve);
+          if(curve_state === 2){
+            plot.AddHover(osc_curve);
+          } else if(curve_state === 1){
+            plot.ShowNext(osc_curve);
           } else {
             plot.AddCurve(osc_curve);
           }
@@ -87,20 +115,28 @@
           op_plot.DrawAxes(op_el);
 
           document.getElementById("add_btn").onclick =
-            function(){AddCurve(op_plot, op, false);};
+            function(){AddCurve(op_plot, op, 0);};
           document.getElementById("clear_btn").onclick =
             function(){op_plot.ClearAll();};
 
-          AddCurve(op_plot, op, true);
+          AddCurve(op_plot, op, 1);
 
           let cc = document.getElementById("ConstraintControls");
-          var ce = new ConstraintElements();
-          ce.Initialize(cc, function(changed_params) {
-            console.log(changed_params);
-            Object.keys(changed_params).forEach(function(param) {
-              op.Set(param, changed_params[param]);
-            });
-            AddCurve(op_plot,op,true);
+          InitializeConstraintPlots(cc, function(chg_par) {
+            op.Set(chg_par.xax_name, chg_par.xax_point);
+            op.Set(chg_par.yax_name, chg_par.yax_point);
+
+            AddCurve(op_plot, op, 1);
+            return op;
+          }, function(chg_par){
+            let op_cpy = op.Copy();
+            console.log(op_cpy);
+            op_cpy.Set(chg_par.xax_name, chg_par.xax_point);
+            op_cpy.Set(chg_par.yax_name, chg_par.yax_point);
+
+            AddCurve(op_plot, op_cpy, 2);
+          }, function(){
+            op_plot.RemoveHover();
           }
           );
 
