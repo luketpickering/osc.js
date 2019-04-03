@@ -1,3 +1,14 @@
+function GetNuName(nu_pdg){
+  switch(nu_pdg){
+    case -12: { return "anti-electron"; }
+    case -14: { return "anti-muon"; }
+    case -16: { return "anti-tau"; }
+    case 12: { return "electron"; }
+    case 14: { return "muon"; }
+    case 16: { return "tau"; }
+  }
+}
+
 class OscParams {
   constructor() {
     this.S2Th12 = 0.297;
@@ -73,6 +84,20 @@ class OscParams {
     } else if (name === "dcp") {
       return this.dcp;
     }
+  }
+
+  GenToolTipHTML(pdg_from,pdg_to,baseline) {
+    return [
+      `<div>From: ${GetNuName(pdg_from)}</div>`,
+      `<div>To: ${GetNuName(pdg_to)}</div>`,
+      `<div>Baseline: ${baseline} km</div>`,
+      `<div>${OscParams.GetLatexName("S2Th12")}: ${this.S2Th12}</div>`,
+      `<div>${OscParams.GetLatexName("S2Th13")}: ${this.S2Th13}</div>`,
+      `<div>${OscParams.GetLatexName("S2Th23")}: ${this.S2Th23}</div>`,
+      `<div>${OscParams.GetLatexName("Dm2_21")}: ${this.Dm2_21}</div>`,
+      `<div>${OscParams.GetLatexName("Dm2_Atm")}: ${this.Dm2_Atm}</div>`,
+      `<div>${OscParams.GetLatexName("dcp")}: ${this.dcp}</div>`,
+    ].join("");
   }
 
   InitializeTable(el) {
@@ -228,7 +253,6 @@ class ConstraintAxes {
 class ConstraintPlot {
 
   constructor(ConstraintDataf, xAxisf, yAxisf) {
-    console.log(ConstraintDataf, xAxisf, yAxisf);
     this.ConstraintData = ConstraintDataf;
     this.xAxis = xAxisf;
     this.yAxis = yAxisf;
@@ -250,8 +274,8 @@ class ConstraintPlot {
 
   Initialize(ele, onchanged_callback, on_hover_callback, off_hover_callback) {
 
-    let width = 400;
-    let height = 300;
+    let width = 200;
+    let height = 150;
     let margin = {top : 20, right : 20, bottom : 75, left : 90};
     let tot_width = width + margin.left + margin.right;
     let tot_height = height + margin.top + margin.bottom;
@@ -304,7 +328,6 @@ class ConstraintPlot {
         .style("text-anchor", "middle")
         .text(this.yAxis.title);
 
-    console.log(this.ConstraintData);
     for (let ci = 0; ci < this.ConstraintData.length; ++ci) {
       for (let pi = 0; pi < this.ConstraintData[ci].data.length; ++pi) {
         this.svg.append("path")
@@ -335,6 +358,18 @@ class ConstraintPlot {
               onchanged_callback(params);
             })
         .on("mousemove",
+            function() {
+              // Get x/y in axes coords
+              let coords = d3.mouse(this);
+              let xaxcoords = xScale.invert(coords[0]);
+              let yaxcoords = yScale.invert(coords[1]);
+
+              let params =
+                  new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
+
+              on_hover_callback(params);
+            })
+        .on("touchmove",
             function() {
               // Get x/y in axes coords
               let coords = d3.mouse(this);
@@ -394,7 +429,6 @@ function InitializeConstraintPlots(el, onchanged_callback, on_hover_callback,
   let ax_S2Th13 = new ConstraintAxes("S2Th13", OscParams.GetLatexName("S2Th23"),
                                      10E-3, 50E-3, [ 7 ]);
 
-  console.log(constraint_data);
   constraint_plots.push(new ConstraintPlot(constraint_data["S2Th23_Dm2_Atm"],
                                            ax_S2Th23, ax_Dm2_Atm));
   constraint_plots.push(

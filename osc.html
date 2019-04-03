@@ -42,6 +42,22 @@
     .T2KConstraint {
       stroke: red;
     }
+
+    div.tooltip {
+      position: absolute;
+      text-align: left;
+      /* width: 150px; */
+      /* height: 300px; */
+      padding: 5px;
+      font: 12px sans-serif;
+      background: lightsteelblue;
+      border: 0px;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+    .tooltip span {
+      width: 100%;
+    }
   </style>
 
   <!-- MathJax -->
@@ -99,9 +115,11 @@
           if(curve_state === 2){
             plot.AddHover(osc_curve);
           } else if(curve_state === 1){
-            plot.ShowNext(osc_curve);
+            let tool_tip_html = params.GenToolTipHTML(pdg_from, pdg_to, baseline_km);
+            plot.ShowNext(osc_curve, tool_tip_html);
           } else {
-            plot.AddCurve(osc_curve);
+            let tool_tip_html = params.GenToolTipHTML(pdg_from, pdg_to, baseline_km);
+            plot.AddCurve(osc_curve, tool_tip_html);
           }
 
         }
@@ -112,7 +130,7 @@
 
           let op_el = document.getElementById("OscProbPlot");
           var op_plot = new OscProbPlot();
-          op_plot.DrawAxes(op_el);
+          op_plot.DrawAxes(op_el, 0.1, 5);
 
           document.getElementById("add_btn").onclick =
             function(){AddCurve(op_plot, op, 0);};
@@ -130,7 +148,6 @@
             return op;
           }, function(chg_par){
             let op_cpy = op.Copy();
-            console.log(op_cpy);
             op_cpy.Set(chg_par.xax_name, chg_par.xax_point);
             op_cpy.Set(chg_par.yax_name, chg_par.yax_point);
 
@@ -152,26 +169,26 @@
                 pdg_from = -Math.abs(pdg_from);
                 pdg_to = -Math.abs(pdg_to);
               }
-              AddCurve(op_plot,op,true);
+              AddCurve(op_plot,op,1);
             });
           d3.select("#from_pdg_selector").selectAll("p").on("click",
             function(){
               let chosen = this.innerHTML;
               d3.select(this.parentNode.parentNode).select("button").text(chosen);
               pdg_from = parseInt(this.dataset.nupdg);
-              AddCurve(op_plot,op,true);
+              AddCurve(op_plot,op,1);
             });
           d3.select("#to_pdg_selector").selectAll("p").on("click",
             function(){
               let chosen = this.innerHTML;
               d3.select(this.parentNode.parentNode).select("button").text(chosen);
               pdg_to = parseInt(this.dataset.nupdg);
-              AddCurve(op_plot,op,true);
+              AddCurve(op_plot,op,1);
             });
             d3.select("#baseline_input").on('change',function(){
               let chosen = parseFloat(this.value);
               baseline_km = chosen;
-              AddCurve(op_plot,op,true);
+              AddCurve(op_plot,op,1);
             });
 
 
@@ -187,19 +204,70 @@
 
   <div class="container">
     <div class="row">
-      <h1>Oscillation Probability</h1>
-      <div id="OscProbPlot" class="col-12"></div>
+      <div class="col-lg">
+        <h1>Oscillation Probability</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-2">
+        <label for="neutrino_selector">Neutrino:</label>
+        <div id="neutrino_selector" class="btn-group">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Neutrino
+          </button>
+          <div class="dropdown-menu">
+            <p data-nutype="nu" class="dropdown-item">Neutrino</p>
+            <p data-nutype="nubar" class="dropdown-item">Anti-Neutrino</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-2">
+        <label for="from_pdg_selector">Osc. from:</label>
+        <div id="from_pdg_selector" class="btn-group">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Muon
+          </button>
+          <div class="dropdown-menu">
+            <p data-nupdg="12" class="dropdown-item">Electron</p>
+            <p data-nupdg="14" class="dropdown-item">Muon</p>
+            <p data-nupdg="16" class="dropdown-item">Tau</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-2">
+        <label for="to_pdg_selector">Osc. to:</label>
+        <div id="to_pdg_selector" class="btn-group">
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Muon
+          </button>
+          <div class="dropdown-menu">
+            <p data-nupdg="12" class="dropdown-item">Electron</p>
+            <p data-nupdg="14" class="dropdown-item">Muon</p>
+            <p data-nupdg="16" class="dropdown-item">Tau</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group">
+          <label for="baseline_input">Experimental baseline in km</label>
+          <input type="email" class="form-control" id="baseline_input" value="1300" >
+        </div>
+      </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-8" >
+        <div id="OscProbPlot" ></div>
+      </div>
+      <div class="col-4" >
+        <div id="ConstraintControls" ></div>
+      </div>
     </div>
     <div class="row">
       <div class="col-12" >
         <button id="add_btn" type="button" class="btn btn-primary">Add</button>
         <button id="clear_btn" type="button" class="btn btn-primary">Clear</button>
       </div>
-    </div>
-    <div class="row">
-      <h1>Oscillation Parameters</h1>
-      <h5>Click on plots to select parameter values</h3>
-      <div id="ConstraintControls" class="col-8"></div>
     </div>
     <div class="row">
       <div class="col-8">
@@ -212,45 +280,6 @@
           </thead>
           <tbody/>
         </table>
-      </div>
-      <div class="col-8">
-        <div id="neutrino_selector" class="btn-group">
-          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Neutrino
-          </button>
-          <div class="dropdown-menu">
-            <p data-nutype="nu" class="dropdown-item">Neutrino</p>
-            <p data-nutype="nubar" class="dropdown-item">Anti-Neutrino</p>
-          </div>
-        </div>
-        <div id="from_pdg_selector" class="btn-group">
-          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Muon
-          </button>
-          <div class="dropdown-menu">
-            <p data-nupdg="12" class="dropdown-item">Electron</p>
-            <p data-nupdg="14" class="dropdown-item">Muon</p>
-            <p data-nupdg="16" class="dropdown-item">Tau</p>
-          </div>
-        </div>
-        <div id="to_pdg_selector" class="btn-group">
-          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Muon
-          </button>
-          <div class="dropdown-menu">
-            <p data-nupdg="12" class="dropdown-item">Electron</p>
-            <p data-nupdg="14" class="dropdown-item">Muon</p>
-            <p data-nupdg="16" class="dropdown-item">Tau</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-8">
-        <div class="form-group">
-        <label for="Baseline">Experimental baseline in km</label>
-        <input type="email" class="form-control" id="baseline_input" placeholder="1300">
-        </div>
       </div>
     </div>
   </div>

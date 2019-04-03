@@ -2,11 +2,12 @@ class OscProbPlot {
   constructor() {
     this.Curves = [];
     this.next = undefined;
+    this.hvr = undefined;
   }
 
   DrawAxes(el, xmin_GeV = 0, xmax_GeV = 10, ymin = 0, ymax = 1) {
-    this.width = 600;
-    this.height = 300;
+    this.width = 500;
+    this.height = 400;
     this.margin = {top : 20, right : 20, bottom : 75, left : 90};
     this.tot_width = this.width + this.margin.left + this.margin.right;
     this.tot_height = this.height + this.margin.top + this.margin.bottom;
@@ -58,34 +59,89 @@ class OscProbPlot {
                       .text("$P_{\\textrm{osc.}}$");
   }
 
-  AddCurve(curve) {
-    this.Curves.push(
-        this.svg.append("path")
-            .attr("d",
-                  this.lineGen(curve.data)) // 11. Calls the line generator
-            .attr("class", "osc_line"));
+  ScrubCurve(curve) {
+    let xScale = this.xScale;
+    let width = this.width;
+    curve.data = curve.data.filter((value, index, arr) => {
+      let svg_coords = xScale(value[0]);
+      return ((svg_coords > 0) && (svg_coords < width));
+    });
+  }
+
+  AddCurve(curve, tool_tip_html) {
+    this.ScrubCurve(curve);
+    let tooltip = d3.select("body")
+                      .append("div")
+                      .attr("class", "tooltip")
+                      .style("opacity", 0);
+    tooltip.html(tool_tip_html);
+
+    this.Curves.push({
+      path : this.svg.append("path")
+                 .attr("d",
+                       this.lineGen(curve.data)) // 11. Calls the line generator
+                 .attr("class", "osc_line")
+                 .on("mouseover",
+                     function() {
+                       console.log("over");
+                       tooltip.transition().duration(200).style("opacity", .9);
+                       tooltip.style("left", (d3.event.pageX) + "px")
+                           .style("top", (d3.event.pageY - 28) + "px");
+                     })
+                 .on("mouseout",
+                     function() {
+                       tooltip.transition().duration(500).style("opacity", 0);
+                     }),
+      tooltip : tooltip
+    });
   };
 
+  RemoveNext(){
+    if (this.next != undefined) {
+      this.next.path.remove();
+      this.next.tooltip.remove();
+      this.next = undefined;
+    }
+  }
   ClearAll() {
     for (let i = 0; i < this.Curves.length; ++i) {
-      this.Curves[i].remove();
+      this.Curves[i].path.remove();
+      this.Curves[i].tooltip.remove();
     }
-    if (this.next != undefined) {
-      this.next.remove();
-    }
+    this.Curves = [];
+    this.RemoveNext();
   }
 
-  ShowNext(curve) {
-    if (this.next != undefined) {
-      this.next.remove();
-    }
-    this.next =
-        this.svg.append("path")
-            .attr("d",
-                  this.lineGen(curve.data)) // 11. Calls the line generator
-            .attr("class", "osc_line osc_next");
+  ShowNext(curve, tool_tip_html) {
+    this.ScrubCurve(curve);
+    this.RemoveNext();
+    let tooltip = d3.select("body")
+                      .append("div")
+                      .attr("class", "tooltip")
+                      .style("opacity", 0);
+    tooltip.html(tool_tip_html);
+
+    this.next = {
+      path : this.svg.append("path")
+                 .attr("d",
+                       this.lineGen(curve.data)) // 11. Calls the line generator
+                 .attr("class", "osc_line osc_next")
+                 .on("mouseover",
+                     function() {
+                       console.log("over");
+                       tooltip.transition().duration(200).style("opacity", .9);
+                       tooltip.style("left", (d3.event.pageX) + "px")
+                           .style("top", (d3.event.pageY - 28) + "px");
+                     })
+                 .on("mouseout",
+                     function() {
+                       tooltip.transition().duration(500).style("opacity", 0);
+                     }),
+      tooltip : tooltip
+    };
   }
   AddHover(curve) {
+    this.ScrubCurve(curve);
     if (this.hvr != undefined) {
       this.hvr.remove();
     }
