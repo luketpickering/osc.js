@@ -1,3 +1,24 @@
+function RenderLatexLabel(text_d3, svg_d3, xwidth, ywidth, xoffset, yoffset,
+                          xscale = 1, yscale = 1, rotate = 0) {
+
+                            text_d3.attr("style","visibility: hidden;");
+
+  MathJax.Hub.setRenderer("SVG");
+  MathJax.Hub.Queue([ "Typeset", MathJax.Hub, text_d3.node() ]);
+  MathJax.Hub.Queue([ function() {
+    let jax_svg = text_d3.select('span>svg');
+
+    svg_d3.append("foreignObject")
+        .attr("y", yoffset)
+        .attr("x", xoffset)
+        .attr("transform", `rotate(${rotate}) scale(${xscale},${yscale})`)
+        .attr("width", xwidth)
+        .attr("height", ywidth)
+        .append(() => { return jax_svg.node(); });
+    text_d3.remove();
+  } ]);
+}
+
 function GetNuName(nu_pdg) {
   switch (nu_pdg) {
   case -12: {
@@ -169,7 +190,7 @@ class OscParams {
                           .text(this.dcp.toPrecision(3));
 
     this.tbl_el = tbl_body.node();
-    MathJax.Hub.Queue(["Typeset",MathJax.Hub,this.tbl_el]);
+    MathJax.Hub.Queue([ "Typeset", MathJax.Hub, this.tbl_el ]);
   }
 };
 
@@ -334,12 +355,8 @@ class ConstraintPlot {
         .call(d3.axisBottom(this.xScale).tickArguments(this.xAxis.tickArgs));
 
     // x axis title
-    this.svg.append("text")
-        .attr("class", "label")
-        .attr("x", width * 0.9)
-        .attr("y", tot_height * 0.9)
-        .style("text-anchor", "middle")
-        .text(this.xAxis.title);
+    RenderLatexLabel(this.svg.append("text").text(this.xAxis.title), this.svg,
+                     "25ex", "10ex", width * 0.6, height * 1.2, 1, 1);
 
     // y axis object
     this.svg.append("g")
@@ -347,12 +364,8 @@ class ConstraintPlot {
         .call(d3.axisLeft(this.yScale).tickArguments(this.yAxis.tickArgs));
 
     // y axis title
-    this.svg.append("text")
-        .attr("class", "label")
-        .attr("y", width * -0.14)
-        .attr("transform", "rotate(-90)")
-        .style("text-anchor", "middle")
-        .text(this.yAxis.title);
+    RenderLatexLabel(this.svg.append("text").text(this.yAxis.title), this.svg,
+                     "25ex", "10ex", -50, -60, 1, 1, -90);
 
     let xAxis_name = this.xAxis.name;
     let yAxis_name = this.yAxis.name;
@@ -379,43 +392,47 @@ class ConstraintPlot {
       on_hover_callback(params);
     };
 
-    this.svg.append("rect")
-        .attr("class", "overlay")
-        .attr("width", width)
-        .attr("height", height)
-        .on("click", clickHandler);
-    // Disable hover for now.
-    // .on("mousemove", hoverHandler)
-    // .on("touchmove", hoverHandler)
-    // .on("mouseout", function() { off_hover_callback(); });
+    MathJax.Hub.Queue([ () => {
+      this.svg.append("rect")
+          .attr("class", "overlay")
+          .attr("width", width)
+          .attr("height", height)
+          .on("click", clickHandler);
 
-    let tooltip = d3.select("body")
-                      .append("div")
-                      .attr("class", "tooltip")
-                      .style("opacity", 0);
+      // Disable hover for now.
+      // .on("mousemove", hoverHandler)
+      // .on("touchmove", hoverHandler)
+      // .on("mouseout", function() { off_hover_callback(); });
 
-    for (let ci = 0; ci < this.ConstraintData.length; ++ci) {
-      for (let pi = 0; pi < this.ConstraintData[ci].data.length; ++pi) {
-        let tool_tip_html = this.ConstraintData[ci].meta.tool_tip_html;
-        let path = this.svg.append("path")
-                       .attr("d",
-                             this.lineGen(
-                                 this.ConstraintData[ci]
-                                     .data[pi])) // 11. Calls the line generator
-                       .attr("class", this.ConstraintData[ci].meta.lineclass)
-                       .on("click", clickHandler);
-        if (tool_tip_html != undefined) {
-          path.on("mouseover", function() {
-                tooltip.transition().duration(200).style("opacity", .9);
-                tooltip.style("left", (d3.event.pageX) + "px")
-                    .style("top", (d3.event.pageY - 28) + "px")
-                    .html(tool_tip_html);
-              }).on("mouseout", function() {
-            tooltip.transition().duration(500).style("opacity", 0);
-          });
+      let tooltip = d3.select("body")
+                        .append("div")
+                        .attr("class", "tooltip")
+                        .style("opacity", 0);
+
+      for (let ci = 0; ci < this.ConstraintData.length; ++ci) {
+        for (let pi = 0; pi < this.ConstraintData[ci].data.length; ++pi) {
+          let tool_tip_html = this.ConstraintData[ci].meta.tool_tip_html;
+          let path =
+              this.svg.append("path")
+                  .attr("d",
+                        this.lineGen(
+                            this.ConstraintData[ci]
+                                .data[pi])) // 11. Calls the line generator
+                  .attr("class", this.ConstraintData[ci].meta.lineclass)
+                  .on("click", clickHandler);
+          if (tool_tip_html != undefined) {
+            path.on("mouseover", function() {
+                  tooltip.transition().duration(200).style("opacity", .9);
+                  tooltip.style("left", (d3.event.pageX) + "px")
+                      .style("top", (d3.event.pageY - 28) + "px")
+                      .html(tool_tip_html);
+                }).on("mouseout", function() {
+              tooltip.transition().duration(500).style("opacity", 0);
+            });
+          }
         }
       }
-    }
+    } ]);
   };
 
   // Callback for setting new values
