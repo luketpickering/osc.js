@@ -102,10 +102,9 @@ class OffAxis_flux_hist {
     }
 
     let targetvec = lalolib.array2vec(target.bincontent);
-    this.mat = lalolib.entrywisemul(this.mat, 1E15);
+    let bigmat = lalolib.entrywisemul(this.mat, 1E15);
     targetvec = lalolib.entrywisemul(targetvec, 1E15);
-    let result = lalolib.solve(this.mat, targetvec);
-    this.mat = lalolib.entrywisemul(this.mat, 1E-15);
+    let result = lalolib.solve(bigmat, targetvec);
     return { bf: lalolib.mul(this.mat, result), coeffs: result };
   }
 };

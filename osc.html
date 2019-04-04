@@ -207,6 +207,7 @@
               bfflux.line_class = "orange_line";
               fp.Draw(bfflux);
 
+              lcp.Clear(1);
               lincomb = new flux_hist(DUNE_flux.ND.numode.numu.bins_OA, bfbinc.coeffs);
               lincomb.line_class = "orange_line";
               lcp.Draw(lincomb);
