@@ -26,6 +26,16 @@
       fill: none;
       pointer-events: all;
     }
+    .blue_line {
+      stroke: blue;
+      stroke-width: 2;
+      fill: none;
+    }
+    .red_line {
+      stroke: red;
+      stroke-width: 2;
+      fill: none;
+    }
     .osc_line {
       stroke: blue;
       stroke-width: 2;
@@ -80,15 +90,22 @@
 
   <!-- d3.js -->
   <script src="https://d3js.org/d3.v5.min.js"></script>
+
+  <!-- LALOLib -->
+  <script src="http://mlweb.loria.fr/lalolib-noglpk-module.min.js"></script>
+
   <!-- Local code -->
   <script src="prob3.js"></script>
   <script src="Constraint.data.js"></script>
   <script src="OscProbConstraints.js"></script>
   <script src="OscProbPlot.js"></script>
 
+  <script src="DUNE_Fluxes.js"></script>
+  <script src="flux_hist.js"></script>
+
   <script type="text/javascript">
 
-        var bp = new BargerPropagator();
+        var oschelp = new OscHelper();
         var op = new OscParams();
 
         var pdg_from = 14;
@@ -97,13 +114,8 @@
 
         function AddCurve(plot, params, curve_state=0) {
 
-          let nufrom = GetProb3NuTypeFromPDG(pdg_from);
-          let nuto = GetProb3NuTypeFromPDG(pdg_to);
-          if((nufrom === 0)||(nuto === 0)){
-            return;
-          }
 
-          bp.SetMNS(params.S2Th12,params.S2Th13,params.S2Th23,params.Dm2_21,params.Dm2_Atm,params.dcp, 1, true, nufrom);
+          oschelp.SetOscillation(pdg_from, baseline_km, params);
 
           let osc_curve = {
             meta : {id : 0, name : "osc_curve" },
@@ -119,9 +131,7 @@
           for(let i = 0; i < ESteps; ++i){
             let p = [];
             p[0] = EMin + i*EStep;
-            bp.SetEnergy(p[0]);
-            bp.propagateLinear(nufrom,baseline_km, 3.3);
-            p[1] = bp.GetProb(nufrom, nuto);
+            p[1] = oschelp.GetProb(p[0], pdg_to);
             if(!isNaN(p[1])){
               osc_curve.data.push(p);
             }
@@ -171,6 +181,17 @@
             op_plot.RemoveHover();
           }
           );
+
+          let fluxhistplot_el = document.getElementById("FluxHistPlot");
+          let FD_numode_numu_flux = new flux_hist(DUNE_flux.FD.nu_mode.numu.bins,DUNE_flux.FD.nu_mode.numu.bin_content);
+
+          let fp = new flux_plot();
+          let FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
+          FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
+          FD_numode_numu_flux_osc.line_class = "blue_line";
+          FD_numode_numu_flux.line_class = "red_line";
+          fp.Draw(fluxhistplot_el, FD_numode_numu_flux,1E15);
+          fp.Draw(fluxhistplot_el, FD_numode_numu_flux_osc);
 
           d3.select("#neutrino_selector").selectAll("p").on("click",
             function(){
@@ -275,6 +296,7 @@
         <div id="OscProbPlot" ></div>
       </div>
       <div class="col-4" >
+        <h5>Click/Drag to choose parameters</h5>
         <div id="ConstraintControls" ></div>
       </div>
     </div>
@@ -295,6 +317,11 @@
           </thead>
           <tbody/>
         </table>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-8">
+          <div id="FluxHistPlot" ></div>
       </div>
     </div>
   </div>
