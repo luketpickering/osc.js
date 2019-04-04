@@ -357,7 +357,7 @@ class ConstraintPlot {
                          "translate(" + margin.left + "," + margin.top + ")");
     // x axis object
     this.svg.append("g")
-        .attr("class", "x axis")
+        .attr("class", "x_axis")
         .attr("transform", "translate(0," + height + ")")
         .call(d3.axisBottom(this.xScale).tickArguments(this.xAxis.tickArgs));
 
@@ -367,12 +367,12 @@ class ConstraintPlot {
 
     // y axis object
     this.svg.append("g")
-        .attr("class", "y axis")
+        .attr("class", "y_axis")
         .call(d3.axisLeft(this.yScale).tickArguments(this.yAxis.tickArgs));
 
     // y axis title
     RenderLatexLabel(this.svg.append("text").text(this.yAxis.title), this.svg,
-                     "25ex", "10ex", -50, -60, 1, 1, -90);
+                     "25ex", "10ex", -120, -80, 1, 1, -90);
 
     let xAxis_name = this.xAxis.name;
     let yAxis_name = this.yAxis.name;
@@ -410,7 +410,6 @@ class ConstraintPlot {
 
       function mouseDownHandler() {
         plot.no_set_point = true;
-        clickHandler(this);
         rect.on("mousemove", hoverHandler);
       };
 
@@ -497,14 +496,14 @@ function InitializeConstraintPlots(el, onchanged_callback, on_hover_callback,
       2.7E-3, [ 3 ], 1E3);
 
   let ax_S2Th23 = new ConstraintAxes("S2Th23", OscParams.GetLatexName("S2Th23"),
-                                     0.4, 0.6, [ 3 ]);
+                                     0.4, 0.6, [ 2 ]);
 
   let ax_dcp =
       new ConstraintAxes("dcp", "\\(\\delta_{\\rm {\\small cp}} /\\pi\\)",
-                         -Math.PI, Math.PI, [ 3 ], 1.0 / Math.PI);
+                         -Math.PI, Math.PI, [ 2 ], 1.0 / Math.PI);
 
-  let ax_S2Th13 = new ConstraintAxes("S2Th13", OscParams.GetLatexName("S2Th23"),
-                                     10E-3, 50E-3, [ 3 ]);
+  let ax_S2Th13 = new ConstraintAxes("S2Th13", OscParams.GetLatexName("S2Th13"),
+                                     10E-3, 50E-3, [ 2 ]);
 
   constraint_plots.push(new ConstraintPlot(constraint_data["S2Th23_Dm2_Atm"],
                                            ax_S2Th23, ax_Dm2_Atm));
