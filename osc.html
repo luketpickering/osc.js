@@ -103,7 +103,7 @@
             return;
           }
 
-          bp.SetMNS(params.S2Th12,params.S2Th13,params.S2Th23,params.Dm2_21,params.Dm2_Atm,params.dcp, 1, true, 1);
+          bp.SetMNS(params.S2Th12,params.S2Th13,params.S2Th23,params.Dm2_21,params.Dm2_Atm,params.dcp, 1, true, nufrom);
 
           let osc_curve = {
             meta : {id : 0, name : "osc_curve" },
@@ -120,7 +120,7 @@
             let p = [];
             p[0] = EMin + i*EStep;
             bp.SetEnergy(p[0]);
-            bp.propagateLinear(1,baseline_km, 3.3);
+            bp.propagateLinear(nufrom,baseline_km, 3.3);
             p[1] = bp.GetProb(nufrom, nuto);
             if(!isNaN(p[1])){
               osc_curve.data.push(p);
