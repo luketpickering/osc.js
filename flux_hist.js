@@ -101,10 +101,28 @@ class OffAxis_flux_hist {
       return;
     }
 
+    let bigfac = 1E15;
+    let regfac = 1E-9;
     let targetvec = lalolib.array2vec(target.bincontent);
-    let bigmat = lalolib.entrywisemul(this.mat, 1E15);
-    targetvec = lalolib.entrywisemul(targetvec, 1E15);
-    let result = lalolib.solve(bigmat, targetvec);
+    let bigmat = lalolib.entrywisemul(this.mat, bigfac);
+    targetvec = lalolib.entrywisemul(targetvec, bigfac);
+    let RHS = lalolib.mul(lalolib.transpose(bigmat), targetvec);
+
+    // make the penalty matrix
+    // there is probably a better way to do this
+    // e.g., off-diag  
+    let A = lalolib.eye(bigmat.n);
+    for ( let i = 0; i < A.m; i++ ) {
+    	for ( let j = 0; j < A.n; j++ ) {
+    	    if ( i == j - 1 ) {
+    		A[i, j] = -1;
+    	    }
+    	}
+    }
+      
+    A = lalolib.entrywisemul(A, bigfac*regfac);
+    let LHS = lalolib.add(lalolib.xtx(bigmat), lalolib.xtx(A));
+    let result = lalolib.solve(LHS, RHS);
     return { bf: lalolib.mul(this.mat, result), coeffs: result };
   }
 };
