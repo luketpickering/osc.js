@@ -102,31 +102,10 @@ class OffAxis_flux_hist {
     }
 
     let targetvec = lalolib.array2vec(target.bincontent);
-
-    // (FluxMatrix_Solve.topRows(NBins).transpose() *
-    //                          FluxMatrix_Solve.topRows(NBins))
-    //                             .inverse() *
-    //                         FluxMatrix_Solve.topRows(NBins).transpose() *
-    //                         Target.topRows(NBins);
-
-    this.mat = lalolib.entrywisemul(this.mat,1E15);
-    targetvec = lalolib.entrywisemul(targetvec,1E15);
-
-    // let xtx = lalolib.xtx(this.mat);
-    // console.log("xtx: ", xtx);
-    // let xtxi = lalolib.inv(xtx);
-    // console.log("xtxi: ", xtxi);
-    // let xtxixt = lalolib.mul(xtxi, lalolib.transpose(this.mat));
-    // console.log("xtxixt: ", xtxixt);
-    // let result = lalolib.mul(xtxixt, target);
+    this.mat = lalolib.entrywisemul(this.mat, 1E15);
+    targetvec = lalolib.entrywisemul(targetvec, 1E15);
     let result = lalolib.solve(this.mat, targetvec);
-    this.mat = lalolib.entrywisemul(this.mat,1E-15);
-
-    console.log("result: ", result);
-
-    // let result = lalolib.solve(this.mat, targetvec);
-
-    console.log(lalolib.mul(this.mat, result));
+    this.mat = lalolib.entrywisemul(this.mat, 1E-15);
     return (lalolib.mul(this.mat, result));
   }
 };
@@ -136,8 +115,8 @@ class flux_plot {
   constructor() { this.Hists = []; }
 
   DrawAxes(el, axes_ranges, yScaleFactor = 1) {
-    this.width = 300;
-    this.height = 200;
+    this.width = 450;
+    this.height = 350;
     this.margin = {top : 20, right : 20, bottom : 75, left : 95};
     this.tot_width = this.width + this.margin.left + this.margin.right;
     this.tot_height = this.height + this.margin.top + this.margin.bottom;
@@ -174,7 +153,7 @@ class flux_plot {
 
     RenderLatexLabel(
         this.svg.append("text").text("\\(E_{\\nu} \\textrm{(GeV)}\\)"),
-        this.svg, "25ex", "10ex", this.width * 0.6, this.height * 1.15, 1, 1);
+        this.svg, "25ex", "10ex", this.width * 0.75, this.height * 1.1, 1, 1);
 
     this.svg.append("g")
         .attr("class", "y_axis biglabel")
@@ -183,7 +162,7 @@ class flux_plot {
     RenderLatexLabel(
         this.svg.append("text").text(
             "\\(\\Phi \\times{}10^{15} \\textrm{cm}^{-2}/\\textrm{POT}\\)"),
-        this.svg, "25ex", "10ex", -200, -65, 1, 1, -90);
+        this.svg, "25ex", "10ex", -225, -65, 1, 1, -90);
   }
 
   Draw(flux_h) {
@@ -196,9 +175,15 @@ class flux_plot {
                         .attr("d", this.lineGen(flux_h.GetPointList()))
                         .attr("class", lineclass));
   }
-
-  ReDraw(flux_h) {
-    this.Hists[this.Hists.length - 1].remove();
-    this.Draw(flux_h);
+  Clear(n = 1) {
+    if (n <= 0) {
+      return;
+    }
+    if (n > this.Hists.length) {
+      n = this.Hists.length;
+    }
+    for (let i = this.Hists.length - n; i < this.Hists.length; ++i) {
+      this.Hists[i].remove();
+    }
   }
 };

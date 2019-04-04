@@ -182,12 +182,7 @@
           fp.Draw(FD_numode_numu_flux);
           FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
           fp.Draw(FD_numode_numu_flux_osc);
-
-          console.log("ND Flux bins: ", ND_numuode_numu_flux.e_bins.length-1);
-          console.log("FD Flux bins: ", FD_numode_numu_flux_osc.e_bins.length-1);
-
           let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc);
-
           let bfflux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e, bfbinc);
           bfflux.line_class = "orange_line";
           fp.Draw(bfflux);
@@ -197,7 +192,13 @@
               FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
               FD_numode_numu_flux_osc.line_class = "blue_line";
               FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
-              fp.ReDraw(FD_numode_numu_flux_osc);
+              fp.Clear(2);
+              fp.Draw(FD_numode_numu_flux_osc);
+              let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc);
+              let bfflux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e, bfbinc);
+              bfflux.line_class = "orange_line";
+              fp.Draw(bfflux);
+
             };
 
           let cc = document.getElementById("ConstraintControls");
@@ -331,7 +332,12 @@
       <div class="col-12" >
         <button id="add_btn" type="button" class="btn btn-primary">Add</button>
         <button id="clear_btn" type="button" class="btn btn-primary">Clear</button>
-        <button id="oscflux_btn" type="button" class="btn btn-primary">Osc. Flux</button>
+        <button id="oscflux_btn" type="button" class="btn btn-primary">Prism it!</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-8">
+          <div id="FluxHistPlot" ></div>
       </div>
     </div>
     <div class="row">
@@ -345,11 +351,6 @@
           </thead>
           <tbody/>
         </table>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-8">
-          <div id="FluxHistPlot" ></div>
       </div>
     </div>
   </div>
