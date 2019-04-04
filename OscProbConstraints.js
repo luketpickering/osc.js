@@ -1,7 +1,7 @@
 function RenderLatexLabel(text_d3, svg_d3, xwidth, ywidth, xoffset, yoffset,
                           xscale = 1, yscale = 1, rotate = 0) {
 
-                            text_d3.attr("style","visibility: hidden;");
+  text_d3.attr("style", "visibility: hidden;");
 
   MathJax.Hub.setRenderer("SVG");
   MathJax.Hub.Queue([ "Typeset", MathJax.Hub, text_d3.node() ]);
@@ -171,7 +171,7 @@ class OscParams {
         .text(OscParams.GetLatexName("Dm2_Atm"));
     this.Dm2_Atm_tblval = this.Dm2_Atm_row.append("tr")
                               .attr("scope", "row")
-                              .text(this.Dm2_Atm.toExponential(3));
+                              .text(this.Dm2_Atm.toExponential(3) + " eV");
 
     this.Dm2_21_row = tbl_body.append("tr");
     this.Dm2_21_row.append("th")
@@ -179,7 +179,7 @@ class OscParams {
         .text(OscParams.GetLatexName("Dm2_21"));
     this.Dm2_21_tblval = this.Dm2_21_row.append("tr")
                              .attr("scope", "row")
-                             .text(this.Dm2_21.toExponential(3));
+                             .text(this.Dm2_21.toExponential(3) + " eV");
 
     this.dcp_row = tbl_body.append("tr");
     this.dcp_row.append("th")
@@ -288,12 +288,13 @@ class PlotPoint {
 };
 
 class ConstraintAxes {
-  constructor(namef, titlef, minf, maxf, tickArgsf = [ 7 ]) {
+  constructor(namef, titlef, minf, maxf, tickArgsf = [ 5 ], exp_scalef = 1) {
     this.name = namef;
     this.title = titlef;
-    this.min = minf;
-    this.max = maxf;
+    this.min = minf * exp_scalef;
+    this.max = maxf * exp_scalef;
     this.tickArgs = tickArgsf;
+    this.exp_scale = exp_scalef;
   }
 };
 
@@ -306,6 +307,9 @@ class ConstraintPlot {
   };
 
   SetNewOscParams(oscParams) {
+    if (this.no_set_point) {
+      return;
+    }
     // Remove old current point markers
     this.svg.selectAll(".cpoint").remove();
 
@@ -314,8 +318,9 @@ class ConstraintPlot {
 
     this.svg.append("circle")
         .attr("class", "cpoint")
-        .attr("cx", this.xScale(x))
-        .attr("cy", this.yScale(y))
+        .attr("pointer-events", "none")
+        .attr("cx", this.xScale(x * this.xAxis.exp_scale))
+        .attr("cy", this.yScale(y * this.yAxis.exp_scale))
         .attr("r", 3);
   }
 
@@ -331,14 +336,17 @@ class ConstraintPlot {
                       .domain([ this.xAxis.min, this.xAxis.max ]) // input
                       .range([ 0, width ]);                       // output
     let xScale = this.xScale;
+    let xAxis = this.xAxis;
     this.yScale = d3.scaleLinear()
                       .domain([ this.yAxis.min, this.yAxis.max ]) // input
                       .range([ height, 0 ]);                      // output
     let yScale = this.yScale;
-    this.lineGen = d3.line()
-                       .x(function(d) { return xScale(d[0]); })
-                       .y(function(d) { return yScale(d[1]); })
-                       .curve(d3.curveNatural);
+    let yAxis = this.yAxis;
+    this.lineGen =
+        d3.line()
+            .x(function(d) { return xScale(d[0] * xAxis.exp_scale); })
+            .y(function(d) { return yScale(d[1] * yAxis.exp_scale); })
+            .curve(d3.curveNatural);
 
     this.svg = d3.select(ele)
                    .append("svg")
@@ -347,7 +355,6 @@ class ConstraintPlot {
                    .append("g")
                    .attr("transform",
                          "translate(" + margin.left + "," + margin.top + ")");
-
     // x axis object
     this.svg.append("g")
         .attr("class", "x axis")
@@ -370,11 +377,11 @@ class ConstraintPlot {
     let xAxis_name = this.xAxis.name;
     let yAxis_name = this.yAxis.name;
 
-    function clickHandler() {
+    function clickHandler(owner) {
       // Get x/y in axes coords
-      let coords = d3.mouse(this);
-      let xaxcoords = xScale.invert(coords[0]);
-      let yaxcoords = yScale.invert(coords[1]);
+      let coords = d3.mouse(owner);
+      let xaxcoords = xScale.invert(coords[0]) / xAxis.exp_scale;
+      let yaxcoords = yScale.invert(coords[1]) / yAxis.exp_scale;
 
       let params = new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
 
@@ -384,42 +391,55 @@ class ConstraintPlot {
     function hoverHandler() {
       // Get x/y in axes coords
       let coords = d3.mouse(this);
-      let xaxcoords = xScale.invert(coords[0]);
-      let yaxcoords = yScale.invert(coords[1]);
+      let xaxcoords = xScale.invert(coords[0]) / xAxis.exp_scale;
+      let yaxcoords = yScale.invert(coords[1]) / yAxis.exp_scale;
 
       let params = new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
 
       on_hover_callback(params);
     };
 
-    MathJax.Hub.Queue([ () => {
-      this.svg.append("rect")
-          .attr("class", "overlay")
-          .attr("width", width)
-          .attr("height", height)
-          .on("click", clickHandler);
+    let plot = this;
+    this.no_set_point = false;
 
-      // Disable hover for now.
-      // .on("mousemove", hoverHandler)
-      // .on("touchmove", hoverHandler)
-      // .on("mouseout", function() { off_hover_callback(); });
+    MathJax.Hub.Queue([ function() {
+      let rect = plot.svg.append("rect")
+                     .attr("class", "overlay")
+                     .attr("width", width)
+                     .attr("height", height);
+
+      function mouseDownHandler() {
+        plot.no_set_point = true;
+        clickHandler(this);
+        rect.on("mousemove", hoverHandler);
+      };
+
+      function mouseUpHandler() {
+        plot.no_set_point = false;
+        clickHandler(this);
+        rect.on("mousemove", null);
+        off_hover_callback();
+      };
+
+      rect.on("mousedown", mouseDownHandler).on("mouseup", mouseUpHandler);
 
       let tooltip = d3.select("body")
                         .append("div")
                         .attr("class", "tooltip")
                         .style("opacity", 0);
 
-      for (let ci = 0; ci < this.ConstraintData.length; ++ci) {
-        for (let pi = 0; pi < this.ConstraintData[ci].data.length; ++pi) {
-          let tool_tip_html = this.ConstraintData[ci].meta.tool_tip_html;
+      for (let ci = 0; ci < plot.ConstraintData.length; ++ci) {
+        for (let pi = 0; pi < plot.ConstraintData[ci].data.length; ++pi) {
+          let tool_tip_html = plot.ConstraintData[ci].meta.tool_tip_html;
           let path =
-              this.svg.append("path")
+              plot.svg.append("path")
                   .attr("d",
-                        this.lineGen(
-                            this.ConstraintData[ci]
-                                .data[pi])) // 11. Calls the line generator
-                  .attr("class", this.ConstraintData[ci].meta.lineclass)
-                  .on("click", clickHandler);
+                        plot.lineGen(
+                            plot.ConstraintData[ci].data[pi])) // 11. Calls the
+                                                               // line generator
+                  .attr("class", plot.ConstraintData[ci].meta.lineclass)
+                  .on("mousedown", mouseDownHandler)
+                  .on("mouseup", mouseUpHandler);
           if (tool_tip_html != undefined) {
             path.on("mouseover", function() {
                   tooltip.transition().duration(200).style("opacity", .9);
@@ -473,16 +493,18 @@ function InitializeConstraintPlots(el, onchanged_callback, on_hover_callback,
   let constraint_plots = [];
 
   let ax_Dm2_Atm = new ConstraintAxes(
-      "Dm2_Atm", OscParams.GetLatexName("Dm2_Atm"), 2.2E-3, 2.7E-3, [ 7, "e" ]);
+      "Dm2_Atm", "\\(\\Delta{}\\textrm{m}_{32}^{2} 10^{-3} eV\\)", 2.2E-3,
+      2.7E-3, [ 3 ], 1E3);
 
   let ax_S2Th23 = new ConstraintAxes("S2Th23", OscParams.GetLatexName("S2Th23"),
-                                     0.4, 0.6, [ 7 ]);
+                                     0.4, 0.6, [ 3 ]);
 
-  let ax_dcp = new ConstraintAxes("dcp", OscParams.GetLatexName("dcp"),
-                                  -Math.PI, Math.PI, [ 7 ]);
+  let ax_dcp =
+      new ConstraintAxes("dcp", "\\(\\delta_{\\rm {\\small cp}} /\\pi\\)",
+                         -Math.PI, Math.PI, [ 3 ], 1.0 / Math.PI);
 
   let ax_S2Th13 = new ConstraintAxes("S2Th13", OscParams.GetLatexName("S2Th23"),
-                                     10E-3, 50E-3, [ 7 ]);
+                                     10E-3, 50E-3, [ 3 ]);
 
   constraint_plots.push(new ConstraintPlot(constraint_data["S2Th23_Dm2_Atm"],
                                            ax_S2Th23, ax_Dm2_Atm));
