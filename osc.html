@@ -183,9 +183,17 @@
           FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
           fp.Draw(FD_numode_numu_flux_osc);
           let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc);
-          let bfflux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e, bfbinc);
+          let bfflux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e, bfbinc.bf);
           bfflux.line_class = "orange_line";
           fp.Draw(bfflux);
+
+          let lincombplot_el = document.getElementById("LinCombPlot");
+
+          let lcp = new off_axis_lincomb_plot();
+          let lincomb = new flux_hist(DUNE_flux.ND.numode.numu.bins_OA, bfbinc.coeffs);
+          lincomb.line_class = "orange_line";
+          lcp.DrawAxes(lincombplot_el, lincomb, 1E5, 1);
+          lcp.Draw(lincomb);
 
           document.getElementById("oscflux_btn").onclick =
             function(){
@@ -195,10 +203,13 @@
               fp.Clear(2);
               fp.Draw(FD_numode_numu_flux_osc);
               let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc);
-              let bfflux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e, bfbinc);
+              let bfflux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e, bfbinc.bf);
               bfflux.line_class = "orange_line";
               fp.Draw(bfflux);
 
+              lincomb = new flux_hist(DUNE_flux.ND.numode.numu.bins_OA, bfbinc.coeffs);
+              lincomb.line_class = "orange_line";
+              lcp.Draw(lincomb);
             };
 
           let cc = document.getElementById("ConstraintControls");
@@ -336,8 +347,11 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-8">
+      <div class="col-6">
           <div id="FluxHistPlot" ></div>
+      </div>
+      <div class="col-6">
+          <div id="LinCombPlot" ></div>
       </div>
     </div>
     <div class="row">

@@ -106,7 +106,7 @@ class OffAxis_flux_hist {
     targetvec = lalolib.entrywisemul(targetvec, 1E15);
     let result = lalolib.solve(this.mat, targetvec);
     this.mat = lalolib.entrywisemul(this.mat, 1E-15);
-    return (lalolib.mul(this.mat, result));
+    return { bf: lalolib.mul(this.mat, result), coeffs: result };
   }
 };
 
@@ -114,16 +114,19 @@ class flux_plot {
 
   constructor() { this.Hists = []; }
 
-  DrawAxes(el, axes_ranges, yScaleFactor = 1) {
+  DrawAxes(el, axes_ranges, yScaleFactor = 1, xScaleFactor = 1) {
     this.width = 450;
     this.height = 350;
     this.margin = {top : 20, right : 20, bottom : 75, left : 95};
     this.tot_width = this.width + this.margin.left + this.margin.right;
     this.tot_height = this.height + this.margin.top + this.margin.bottom;
 
-    let xScale = d3.scaleLinear()
-                     .domain([ axes_ranges.xmin, axes_ranges.xmax ]) // input
-                     .range([ 0, this.width ]);                      // output
+    let xScale =
+        d3.scaleLinear()
+            .domain([
+              axes_ranges.xmin * xScaleFactor, axes_ranges.xmax * xScaleFactor
+            ])                         // input
+            .range([ 0, this.width ]); // output
     this.xScale = xScale;
 
     let yScale =
@@ -135,7 +138,7 @@ class flux_plot {
     this.yScale = yScale;
 
     this.lineGen = d3.line()
-                       .x(function(d) { return xScale(d[0]); })
+                       .x(function(d) { return xScale(d[0] * xScaleFactor); })
                        .y(function(d) { return yScale(d[1] * yScaleFactor); });
 
     this.svg = d3.select(el)
@@ -163,6 +166,86 @@ class flux_plot {
         this.svg.append("text").text(
             "\\(\\Phi \\times{}10^{15} \\textrm{cm}^{-2}/\\textrm{POT}\\)"),
         this.svg, "25ex", "10ex", -225, -65, 1, 1, -90);
+  }
+
+  Draw(flux_h) {
+    let lineclass = flux_h.line_class;
+    if (lineclass == undefined) {
+      lineclass = "line";
+    }
+
+    this.Hists.push(this.svg.append("path")
+                        .attr("d", this.lineGen(flux_h.GetPointList()))
+                        .attr("class", lineclass));
+  }
+  Clear(n = 1) {
+    if (n <= 0) {
+      return;
+    }
+    if (n > this.Hists.length) {
+      n = this.Hists.length;
+    }
+    for (let i = this.Hists.length - n; i < this.Hists.length; ++i) {
+      this.Hists[i].remove();
+    }
+  }
+};
+
+class off_axis_lincomb_plot {
+
+  constructor() { this.Hists = []; }
+
+  DrawAxes(el, axes_ranges, yScaleFactor = 1, xScaleFactor = 1) {
+    this.width = 300;
+    this.height = 250;
+    this.margin = {top : 20, right : 20, bottom : 75, left : 95};
+    this.tot_width = this.width + this.margin.left + this.margin.right;
+    this.tot_height = this.height + this.margin.top + this.margin.bottom;
+
+    let xScale =
+        d3.scaleLinear()
+            .domain([
+              axes_ranges.xmin * xScaleFactor, axes_ranges.xmax * xScaleFactor
+            ])                         // input
+            .range([ 0, this.width ]); // output
+    this.xScale = xScale;
+
+    let yScale =
+        d3.scaleLinear()
+            .domain([
+              -axes_ranges.ymax * yScaleFactor, axes_ranges.ymax * yScaleFactor
+            ])                          // input
+            .range([ this.height, 0 ]); // output
+    this.yScale = yScale;
+
+    this.lineGen = d3.line()
+                       .x(function(d) { return xScale(d[0] * xScaleFactor); })
+                       .y(function(d) { return yScale(d[1] * yScaleFactor); });
+
+    this.svg = d3.select(el)
+                   .append("svg")
+                   .attr("width", this.tot_width)
+                   .attr("height", this.tot_height)
+                   .append("g")
+                   .attr("transform", "translate(" + this.margin.left + "," +
+                                          this.margin.top + ")");
+
+    this.svg.append("g")
+        .attr("class", "x_axis biglabel")
+        .attr("transform", "translate(0," + this.height + ")")
+        .call(d3.axisBottom(xScale).tickArguments([ 5 ]));
+
+    RenderLatexLabel(
+        this.svg.append("text").text("\\(\\textrm{Off axis position (m)}\\)"),
+        this.svg, "25ex", "10ex", this.width * 0.3, this.height * 1.15, 1, 1);
+
+    this.svg.append("g")
+        .attr("class", "y_axis biglabel")
+        .call(d3.axisLeft(yScale).tickArguments([ 3 ]));
+
+    RenderLatexLabel(
+        this.svg.append("text").text("\\(\\textrm{Sample weight}\\)"), this.svg,
+        "25ex", "10ex", -160, -80, 1, 1, -90);
   }
 
   Draw(flux_h) {
