@@ -164,12 +164,29 @@
 
           AddCurve(op_plot, op, 1);
 
+          let fluxhistplot_el = document.getElementById("FluxHistPlot");
+          let FD_numode_numu_flux = new flux_hist(DUNE_flux.FD.nu_mode.numu.bins,DUNE_flux.FD.nu_mode.numu.bin_content);
+
+          let fp = new flux_plot();
+          let FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
+          FD_numode_numu_flux_osc.line_class = "blue_line";
+          FD_numode_numu_flux.line_class = "red_line";
+          fp.DrawAxes(fluxhistplot_el, FD_numode_numu_flux,1E15);
+          fp.Draw(FD_numode_numu_flux);
+          FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
+          fp.Draw(FD_numode_numu_flux_osc);
+
           let cc = document.getElementById("ConstraintControls");
           InitializeConstraintPlots(cc, function(chg_par) {
             op.Set(chg_par.xax_name, chg_par.xax_point);
             op.Set(chg_par.yax_name, chg_par.yax_point);
 
             AddCurve(op_plot, op, 1);
+
+            FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
+            FD_numode_numu_flux_osc.line_class = "blue_line";
+            FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
+            fp.ReDraw(FD_numode_numu_flux_osc);
             return op;
           }, function(chg_par){
             let op_cpy = op.Copy();
@@ -177,21 +194,16 @@
             op_cpy.Set(chg_par.yax_name, chg_par.yax_point);
 
             AddCurve(op_plot, op_cpy, 2);
+
+            FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
+            FD_numode_numu_flux_osc.line_class = "blue_line";
+            FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
+            fp.ReDraw(FD_numode_numu_flux_osc);
+
           }, function(){
             op_plot.RemoveHover();
           }
           );
-
-          let fluxhistplot_el = document.getElementById("FluxHistPlot");
-          let FD_numode_numu_flux = new flux_hist(DUNE_flux.FD.nu_mode.numu.bins,DUNE_flux.FD.nu_mode.numu.bin_content);
-
-          let fp = new flux_plot();
-          let FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
-          FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
-          FD_numode_numu_flux_osc.line_class = "blue_line";
-          FD_numode_numu_flux.line_class = "red_line";
-          fp.Draw(fluxhistplot_el, FD_numode_numu_flux,1E15);
-          fp.Draw(fluxhistplot_el, FD_numode_numu_flux_osc);
 
           d3.select("#neutrino_selector").selectAll("p").on("click",
             function(){

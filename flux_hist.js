@@ -78,7 +78,7 @@ class flux_plot {
 
   constructor() { this.Hists = []; }
 
-  DrawAxes(el, flux_h, yScaleFactor = 1) {
+  DrawAxes(el, axes_ranges, yScaleFactor = 1) {
     this.width = 300;
     this.height = 200;
     this.margin = {top : 20, right : 20, bottom : 75, left : 95};
@@ -86,15 +86,16 @@ class flux_plot {
     this.tot_height = this.height + this.margin.top + this.margin.bottom;
 
     let xScale = d3.scaleLinear()
-                     .domain([ flux_h.xmin, flux_h.xmax ]) // input
-                     .range([ 0, this.width ]);            // output
+                     .domain([ axes_ranges.xmin, axes_ranges.xmax ]) // input
+                     .range([ 0, this.width ]);                      // output
     this.xScale = xScale;
 
-    let yScale = d3.scaleLinear()
-                     .domain([
-                       flux_h.ymin * yScaleFactor, flux_h.ymax * yScaleFactor
-                     ])                          // input
-                     .range([ this.height, 0 ]); // output
+    let yScale =
+        d3.scaleLinear()
+            .domain([
+              axes_ranges.ymin * yScaleFactor, axes_ranges.ymax * yScaleFactor
+            ])                          // input
+            .range([ this.height, 0 ]); // output
     this.yScale = yScale;
 
     this.lineGen = d3.line()
@@ -122,16 +123,13 @@ class flux_plot {
         .attr("class", "y_axis biglabel")
         .call(d3.axisLeft(yScale).tickArguments([ 3 ]));
 
-    RenderLatexLabel(this.svg.append("text").text(
-                         "\\(\\Phi \\times{}10^{15} \\textrm{cm}^{-2}/\\textrm{POT}\\)"),
-                     this.svg, "25ex", "10ex", -200, -65, 1, 1, -90);
+    RenderLatexLabel(
+        this.svg.append("text").text(
+            "\\(\\Phi \\times{}10^{15} \\textrm{cm}^{-2}/\\textrm{POT}\\)"),
+        this.svg, "25ex", "10ex", -200, -65, 1, 1, -90);
   }
 
-  Draw(el, flux_h, scale = 1) {
-    if (this.svg == undefined) {
-      this.DrawAxes(el, flux_h, scale);
-    }
-
+  Draw(flux_h) {
     let lineclass = flux_h.line_class;
     if (lineclass == undefined) {
       lineclass = "line";
@@ -140,5 +138,10 @@ class flux_plot {
     this.Hists.push(this.svg.append("path")
                         .attr("d", this.lineGen(flux_h.GetPointList()))
                         .attr("class", lineclass));
+  }
+
+  ReDraw(flux_h){
+    this.Hists[this.Hists.length-1].remove();
+    this.Draw(flux_h);
   }
 };
