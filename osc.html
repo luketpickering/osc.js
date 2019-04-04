@@ -36,6 +36,11 @@
       stroke-width: 2;
       fill: none;
     }
+    .orange_line {
+      stroke: orange;
+      stroke-width: 2;
+      fill: none;
+    }
     .osc_line {
       stroke: blue;
       stroke-width: 2;
@@ -165,7 +170,9 @@
           AddCurve(op_plot, op, 1);
 
           let fluxhistplot_el = document.getElementById("FluxHistPlot");
-          let FD_numode_numu_flux = new flux_hist(DUNE_flux.FD.nu_mode.numu.bins,DUNE_flux.FD.nu_mode.numu.bin_content);
+          let FD_numode_numu_flux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e,DUNE_flux.FD.numode.numu.binc);
+
+          let ND_numuode_numu_flux = new OffAxis_flux_hist(DUNE_flux.ND.numode.numu.bins_e, DUNE_flux.ND.numode.numu.bins_OA, DUNE_flux.ND.numode.numu.binc);
 
           let fp = new flux_plot();
           let FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
@@ -176,6 +183,23 @@
           FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
           fp.Draw(FD_numode_numu_flux_osc);
 
+          console.log("ND Flux bins: ", ND_numuode_numu_flux.e_bins.length-1);
+          console.log("FD Flux bins: ", FD_numode_numu_flux_osc.e_bins.length-1);
+
+          let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc);
+
+          let bfflux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e, bfbinc);
+          bfflux.line_class = "orange_line";
+          fp.Draw(bfflux);
+
+          document.getElementById("oscflux_btn").onclick =
+            function(){
+              FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
+              FD_numode_numu_flux_osc.line_class = "blue_line";
+              FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
+              fp.ReDraw(FD_numode_numu_flux_osc);
+            };
+
           let cc = document.getElementById("ConstraintControls");
           InitializeConstraintPlots(cc, function(chg_par) {
             op.Set(chg_par.xax_name, chg_par.xax_point);
@@ -183,10 +207,6 @@
 
             AddCurve(op_plot, op, 1);
 
-            FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
-            FD_numode_numu_flux_osc.line_class = "blue_line";
-            FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
-            fp.ReDraw(FD_numode_numu_flux_osc);
             return op;
           }, function(chg_par){
             let op_cpy = op.Copy();
@@ -194,11 +214,6 @@
             op_cpy.Set(chg_par.yax_name, chg_par.yax_point);
 
             AddCurve(op_plot, op_cpy, 2);
-
-            FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
-            FD_numode_numu_flux_osc.line_class = "blue_line";
-            FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
-            fp.ReDraw(FD_numode_numu_flux_osc);
 
           }, function(){
             op_plot.RemoveHover();
@@ -316,6 +331,7 @@
       <div class="col-12" >
         <button id="add_btn" type="button" class="btn btn-primary">Add</button>
         <button id="clear_btn" type="button" class="btn btn-primary">Clear</button>
+        <button id="oscflux_btn" type="button" class="btn btn-primary">Osc. Flux</button>
       </div>
     </div>
     <div class="row">

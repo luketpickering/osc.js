@@ -1,16 +1,16 @@
 class flux_hist {
-  constructor(bins, bincontent) {
-    if (bins.length != (bincontent.length + 1)) {
-      console.log(`Failed to build new histogram as bins.length: ${
-          bins.length} != bincontent.length+1: ${(bincontent.length + 1)}`);
+  constructor(e_bins, bincontent) {
+    if (e_bins.length != (bincontent.length + 1)) {
+      console.log(`Failed to build new histogram as e_bins.length: ${
+          e_bins.length} != bincontent.length+1: ${(bincontent.length + 1)}`);
       return;
     }
 
-    this.bins = Array.from(bins);
+    this.e_bins = Array.from(e_bins);
     this.bincontent = Array.from(bincontent);
 
-    this.xmin = this.bins[0];
-    this.xmax = this.bins[this.bins.length - 1];
+    this.xmin = this.e_bins[0];
+    this.xmax = this.e_bins[this.e_bins.length - 1];
 
     this.ymin = 0;
     this.ymax = 0;
@@ -23,7 +23,7 @@ class flux_hist {
     }
   }
 
-  Copy() { return new flux_hist(this.bins, this.bincontent); }
+  Copy() { return new flux_hist(this.e_bins, this.bincontent); }
 
   Oscillate(nu_pdg_from, nu_pdg_to, baseline_km, oscParams) {
     oschelp = new OscHelper();
@@ -32,8 +32,8 @@ class flux_hist {
 
     for (let bi_it = 0; bi_it < this.bincontent.length; ++bi_it) {
 
-      let bin_E_low = this.bins[bi_it];
-      let bin_E_up = this.bins[bi_it + 1];
+      let bin_E_low = this.e_bins[bi_it];
+      let bin_E_up = this.e_bins[bi_it + 1];
       let E_step = (bin_E_up - bin_E_low) / 10.0;
 
       let prob_sum = 0;
@@ -61,16 +61,73 @@ class flux_hist {
   GetPointList() {
     let points = [];
 
-    points.push([ this.bins[0], 0 ]);
+    points.push([ this.e_bins[0], 0 ]);
 
-    for (let bi_it = 0; bi_it < (this.bins.length - 1); ++bi_it) {
-      points.push([ this.bins[bi_it], this.bincontent[bi_it] ]);
-      points.push([ this.bins[bi_it + 1], this.bincontent[bi_it] ]);
+    for (let bi_it = 0; bi_it < (this.e_bins.length - 1); ++bi_it) {
+      points.push([ this.e_bins[bi_it], this.bincontent[bi_it] ]);
+      points.push([ this.e_bins[bi_it + 1], this.bincontent[bi_it] ]);
     }
 
-    points.push([ this.bins[this.bins.length - 1], 0 ]);
+    points.push([ this.e_bins[this.e_bins.length - 1], 0 ]);
 
     return points;
+  }
+};
+
+class OffAxis_flux_hist {
+  constructor(e_bins, oa_bins, bincontent) {
+    if (oa_bins.length != (bincontent.length + 1)) {
+      console.log(`Failed to build new histogram as oa_bins.length: ${
+          oa_bins.length} != bincontent.length+1: ${(bincontent.length + 1)}`);
+      return;
+    }
+    if (e_bins.length != (bincontent[0].length + 1)) {
+      console.log(`Failed to build new histogram as e_bins.length: ${
+          e_bins.length} != bincontent[0].length+1: ${
+          (bincontent[0].length + 1)}`);
+      return;
+    }
+
+    this.e_bins = Array.from(e_bins);
+    this.oa_bins = Array.from(oa_bins);
+    this.mat = lalolib.transpose(lalolib.array2mat(bincontent));
+  }
+
+  flux_match(target) {
+
+    if (target.bincontent.length != this.mat.m) {
+      console.log(`Cannot perform flux match. ND EBin count = ${
+          this.mat.m}, FD EBin count = ${target.bincontent.length}`);
+      return;
+    }
+
+    let targetvec = lalolib.array2vec(target.bincontent);
+
+    // (FluxMatrix_Solve.topRows(NBins).transpose() *
+    //                          FluxMatrix_Solve.topRows(NBins))
+    //                             .inverse() *
+    //                         FluxMatrix_Solve.topRows(NBins).transpose() *
+    //                         Target.topRows(NBins);
+
+    this.mat = lalolib.entrywisemul(this.mat,1E15);
+    targetvec = lalolib.entrywisemul(targetvec,1E15);
+
+    // let xtx = lalolib.xtx(this.mat);
+    // console.log("xtx: ", xtx);
+    // let xtxi = lalolib.inv(xtx);
+    // console.log("xtxi: ", xtxi);
+    // let xtxixt = lalolib.mul(xtxi, lalolib.transpose(this.mat));
+    // console.log("xtxixt: ", xtxixt);
+    // let result = lalolib.mul(xtxixt, target);
+    let result = lalolib.solve(this.mat, targetvec);
+    this.mat = lalolib.entrywisemul(this.mat,1E-15);
+
+    console.log("result: ", result);
+
+    // let result = lalolib.solve(this.mat, targetvec);
+
+    console.log(lalolib.mul(this.mat, result));
+    return (lalolib.mul(this.mat, result));
   }
 };
 
@@ -140,8 +197,8 @@ class flux_plot {
                         .attr("class", lineclass));
   }
 
-  ReDraw(flux_h){
-    this.Hists[this.Hists.length-1].remove();
+  ReDraw(flux_h) {
+    this.Hists[this.Hists.length - 1].remove();
     this.Draw(flux_h);
   }
 };
