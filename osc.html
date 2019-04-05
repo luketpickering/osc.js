@@ -116,6 +116,10 @@
         var pdg_from = 14;
         var pdg_to = 14;
         var baseline_km = 1300;
+        var regfac = 1E-9;
+        var emin_prism = 0;
+        var emax_prism = 5;
+        var maxoffaxis = 40;
 
         function AddCurve(plot, params, curve_state=0) {
 
@@ -156,7 +160,7 @@
 
         function OscProbInit(){
 
-          op.InitializeTable(document.getElementById("param_table"));
+          // op.InitializeTable(document.getElementById("param_table"));
 
           let op_el = document.getElementById("OscProbPlot");
           var op_plot = new OscProbPlot();
@@ -182,15 +186,16 @@
           fp.Draw(FD_numode_numu_flux);
           FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
           fp.Draw(FD_numode_numu_flux_osc);
-          let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc);
-          let bfflux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e, bfbinc.bf);
+          let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc, regfac, emin_prism, emax_prism, maxoffaxis);
+          let bfflux = bfbinc.bf;
           bfflux.line_class = "orange_line";
+          console.log(bfflux);
           fp.Draw(bfflux);
 
           let lincombplot_el = document.getElementById("LinCombPlot");
 
           let lcp = new off_axis_lincomb_plot();
-          let lincomb = new flux_hist(DUNE_flux.ND.numode.numu.bins_OA, bfbinc.coeffs);
+          let lincomb = bfbinc.coeffs;
           lincomb.line_class = "orange_line";
           lcp.DrawAxes(lincombplot_el, lincomb, 1E5, 1);
           lcp.Draw(lincomb);
@@ -202,16 +207,18 @@
               FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
               fp.Clear(2);
               fp.Draw(FD_numode_numu_flux_osc);
-              let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc);
-              let bfflux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e, bfbinc.bf);
+              console.log("Min/Max: ", emin_prism, emax_prism);
+              let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc, regfac, emin_prism, emax_prism, maxoffaxis);
+              let bfflux = bfbinc.bf;
               bfflux.line_class = "orange_line";
               fp.Draw(bfflux);
 
               lcp.Clear(1);
-              lincomb = new flux_hist(DUNE_flux.ND.numode.numu.bins_OA, bfbinc.coeffs);
+              let lincomb = bfbinc.coeffs;
               lincomb.line_class = "orange_line";
               lcp.Draw(lincomb);
             };
+
 
           let cc = document.getElementById("ConstraintControls");
           InitializeConstraintPlots(cc, function(chg_par) {
@@ -266,6 +273,23 @@
               baseline_km = chosen;
               AddCurve(op_plot,op,1);
             });
+            d3.select("#regfac_input").on('change',function(){
+              let chosen = parseFloat(this.value);
+              regfac = chosen;
+            });
+            d3.select("#emin_input").on('change',function(){
+              let chosen = parseFloat(this.value);
+              emin_prism = chosen;
+            });
+            d3.select("#emax_input").on('change',function(){
+              let chosen = parseFloat(this.value);
+              emax_prism = chosen;
+            });
+            d3.select("#maxoffaxis_input").on('change',function(){
+              let chosen = parseFloat(this.value);
+              maxoffaxis = chosen;
+            });
+
 
 
         }
@@ -326,7 +350,7 @@
       <div class="col-6">
         <div class="form-group">
           <label for="baseline_input">Experimental baseline in km</label>
-          <input type="email" class="form-control" id="baseline_input" value="1300" >
+          <input type="text" class="form-control" id="baseline_input" value="1300" >
         </div>
       </div>
       </div>
@@ -350,12 +374,28 @@
     <div class="row">
       <div class="col-6">
           <div id="FluxHistPlot" ></div>
+          <div class="form-group">
+            <label for="emin_input">Minimum Energy (GeV)</label>
+            <input type="text" class="form-control" id="emin_input" value="0" >
+          </div>
+          <div class="form-group">
+            <label for="emax_input">Maximum Energy (GeV)</label>
+            <input type="text" class="form-control" id="emax_input" value="5" >
+          </div>
       </div>
       <div class="col-6">
           <div id="LinCombPlot" ></div>
+          <div class="form-group">
+            <label for="regfac_input">Regularization strength</label>
+            <input type="text" class="form-control" id="regfac_input" value="1E-9" >
+          </div>
+          <div class="form-group">
+            <label for="regfac_input">Maximum off-axis position (m)</label>
+            <input type="text" class="form-control" id="maxoffaxis_input" value="40" >
+          </div>
       </div>
     </div>
-    <div class="row">
+    <!-- <div class="row">
       <div class="col-8">
         <table id="param_table" class="table table-bordered">
           <thead>
@@ -367,7 +407,7 @@
           <tbody/>
         </table>
       </div>
-    </div>
+    </div> -->
   </div>
 </body>
 </html>

@@ -72,6 +72,26 @@ class flux_hist {
 
     return points;
   }
+
+  static FindBin(e_bins, E) {
+    console.log("FindBin: ", E);
+    if (E < e_bins[0]) {
+      return -1;
+    }
+    if (E >= e_bins[e_bins.length - 1]) {
+      return e_bins.length;
+    }
+
+    for (let bi_it = 0; bi_it < e_bins.length; ++bi_it) {
+      if (E < e_bins[bi_it]) {
+        console.log("FindBin: bin = ", bi_it);
+
+        return (bi_it - 1);
+      }
+    }
+  }
+
+  FindBin(E) { return flux_hist.FindBin(this.e_bins, E); }
 };
 
 class OffAxis_flux_hist {
@@ -93,7 +113,7 @@ class OffAxis_flux_hist {
     this.mat = lalolib.transpose(lalolib.array2mat(bincontent));
   }
 
-  flux_match(target) {
+  flux_match(target, regfac = 1E-9, emin = 0, emax = 5, oamax = 40) {
 
     if (target.bincontent.length != this.mat.m) {
       console.log(`Cannot perform flux match. ND EBin count = ${
@@ -101,29 +121,63 @@ class OffAxis_flux_hist {
       return;
     }
 
+    let lowbin = target.FindBin(emin);
+    let upbin = target.FindBin(emax);
+
     let bigfac = 1E15;
-    let regfac = 1E-9;
     let targetvec = lalolib.array2vec(target.bincontent);
     let bigmat = lalolib.entrywisemul(this.mat, bigfac);
     targetvec = lalolib.entrywisemul(targetvec, bigfac);
+
+    let emin_bin = 0;
+    let emax_bin = target.bincontent.length;
+    if (upbin < target.bincontent.length) {
+      emax_bin = upbin + 1;
+    }
+    if (lowbin > 0) {
+      emin_bin = lowbin;
+    }
+
+    let upbin_oa = bigmat.n;
+    let oamax_bin = flux_hist.FindBin(this.oa_bins, oamax);
+    if (oamax_bin < (this.oa_bins.length - 1)) {
+      upbin_oa = oamax_bin + 1;
+    }
+
+    console.log("ERange: ", emin, emax, "Bin range: ", lowbin, upbin, "max oa bin: ", oamax_bin, upbin_oa);
+
+    console.log("Before slice: ", bigmat, targetvec);
+
+    bigmat = lalolib.get(bigmat, lalolib.range(emin_bin, emax_bin),
+                         lalolib.range(0, upbin_oa));
+    targetvec = lalolib.get(targetvec, lalolib.range(emin_bin, emax_bin));
+
+    console.log("After slice: ", bigmat, targetvec);
+
     let RHS = lalolib.mul(lalolib.transpose(bigmat), targetvec);
 
     // make the penalty matrix
     // there is probably a better way to do this
-    // e.g., off-diag  
+    // e.g., off-diag
     let A = lalolib.eye(bigmat.n);
-    for ( let i = 0; i < A.m; i++ ) {
-    	for ( let j = 0; j < A.n; j++ ) {
-    	    if ( i == j - 1 ) {
-    		A[i, j] = -1;
-    	    }
-    	}
+    for (let i = 0; i < A.m; i++) {
+      for (let j = 0; j < A.n; j++) {
+        if (i == j - 1) {
+          A[i, j] = -1;
+        }
+      }
     }
-      
-    A = lalolib.entrywisemul(A, bigfac*regfac);
+
+    A = lalolib.entrywisemul(A, bigfac * regfac);
     let LHS = lalolib.add(lalolib.xtx(bigmat), lalolib.xtx(A));
     let result = lalolib.solve(LHS, RHS);
-    return { bf: lalolib.mul(this.mat, result), coeffs: result };
+    let smallmat = lalolib.entrywisemul(bigmat, 1.0 / bigfac);
+
+    let bf = new flux_hist(target.e_bins.slice(emin_bin, emax_bin + 1),
+                           lalolib.mul(smallmat, result));
+    let coeffs = new flux_hist(this.oa_bins.slice(0, upbin_oa+1),
+                           result);
+    return {bf : bf, coeffs : coeffs};
   }
 };
 
