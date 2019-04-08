@@ -37,7 +37,7 @@ class OscProbPlot {
     this.svg.append("g")
         .attr("class", "x_axis biglabel")
         .attr("transform", "translate(0," + this.height + ")")
-        .call(d3.axisBottom(xScale).tickArguments([ 5 ]));
+        .call(d3.axisBottom(xScale).tickArguments([ 8 ]));
 
     RenderLatexLabel(this.svg.append("text").text("\\(E_{\\nu} \\textrm{(GeV)}\\)"),
                 this.svg, "25ex", "10ex", this.width*0.4,this.height*0.72, 1.5, 1.5);

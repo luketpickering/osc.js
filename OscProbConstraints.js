@@ -345,8 +345,8 @@ class ConstraintPlot {
     this.lineGen =
         d3.line()
             .x(function(d) { return xScale(d[0] * xAxis.exp_scale); })
-            .y(function(d) { return yScale(d[1] * yAxis.exp_scale); })
-            .curve(d3.curveNatural);
+            .y(function(d) { return yScale(d[1] * yAxis.exp_scale); });
+            // .curve(d3.curveNatural);
 
     this.svg = d3.select(ele)
                    .append("svg")
@@ -480,6 +480,12 @@ function GetConstraintData() {
       T2K2018_S2Th13_dcp_90.dcp,
       "constraint_line constraint_outer T2KConstraint",
       "<div>Expt: T2K</div><div>Year: 2018</div><div>Ref: PRL 121 171802</div>");
+
+  ConstraintData.AddConstraint(
+      "DB2018_68", "S2Th13", "dcp", [[0.0219832638913, 0.0198958446337,0.0198958446337,0.0219832638913,0.0219832638913]],
+      [[-Math.PI,-Math.PI,Math.PI,Math.PI,-Math.PI]],
+      "constraint_line constraint_inner DBConstraint",
+      "<div>Expt: Daya Bay</div><div>Year: 2016</div><div>Ref: PRD 93, 072011 (2016)</div>");
 
   return ConstraintData.GetConstraintData();
 }
