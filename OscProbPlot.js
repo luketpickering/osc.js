@@ -72,7 +72,7 @@ class OscProbPlot {
       path : this.svg.append("path")
                  .attr("d",
                        this.lineGen(curve.data)) // 11. Calls the line generator
-                 .attr("class", "osc_line")
+                 .attr("class", `osc_line ${curve.line_class}`)
                  .on("mouseover",
                      function() {
                        console.log("over");
@@ -118,7 +118,7 @@ class OscProbPlot {
       path : this.svg.append("path")
                  .attr("d",
                        this.lineGen(curve.data)) // 11. Calls the line generator
-                 .attr("class", "osc_line osc_next")
+                 .attr("class", `osc_line ${curve.line_class}`)
                  .on("mouseover",
                      function() {
                        tooltip.transition().duration(200).style("opacity", .9);
@@ -141,7 +141,7 @@ class OscProbPlot {
         this.svg.append("path")
             .attr("d",
                   this.lineGen(curve.data)) // 11. Calls the line generator
-            .attr("class", "osc_line osc_hover");
+            .attr("class", `osc_line ${curve.line_class} dashed_line`);
   }
   RemoveHover() {
     if (this.hvr != undefined) {

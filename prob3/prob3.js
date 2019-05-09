@@ -1,3 +1,5 @@
+"use strict";
+
 // prob3.js Is a javascript port of the c++ neutrino oscillation probabiltiy
 // calculator, prob3++. Found here:
 // http://webhome.phy.duke.edu/~raw22/public/Prob3++/
@@ -1065,54 +1067,5 @@ class BargerPropagator {
     // console.log(`GetProb(${nuIn},${nuOut}) @ E = ${this.Energy} GeV = ${p}`);
 
     return p;
-  }
-};
-
-class OscHelper {
-  constructor() {
-    this.bp = new BargerPropagator();
-    this.nufrom = 0;
-  }
-
-  static GetProb3NuTypeFromPDG(pdg) {
-    if (pdg === 12) {
-      return 1;
-    } else if (pdg === 14) {
-      return 2;
-    } else if (pdg === 16) {
-      return 3;
-    } else if (pdg === -12) {
-      return -1;
-    } else if (pdg === -14) {
-      return -2;
-    } else if (pdg === -16) {
-      return -3;
-    } else {
-      console.log(`Invalid neutrino pdg: ${pdg}`);
-      return 0;
-    }
-  }
-
-  SetOscillation(nu_pdg_from, baseline_km, osc_params, density_g_cm3 = 3.3) {
-    this.nufrom = OscHelper.GetProb3NuTypeFromPDG(nu_pdg_from);
-    if (this.nufrom === 0) {
-      return;
-    }
-    this.bp.SetMNS(osc_params.S2Th12, osc_params.S2Th13, osc_params.S2Th23,
-                   osc_params.Dm2_21, osc_params.Dm2_Atm, osc_params.dcp, 1,
-                   true, this.nufrom);
-
-    this.baseline_km = baseline_km;
-    this.density_g_cm3 = density_g_cm3;
-  }
-
-  GetProb(Energy_GeV, nu_pdg_to) {
-    let nuto = OscHelper.GetProb3NuTypeFromPDG(nu_pdg_to);
-    if ((this.nufrom === 0) || (nuto === 0)) {
-      return 0;
-    }
-    this.bp.SetEnergy(Energy_GeV);
-    this.bp.propagateLinear(this.nufrom, this.baseline_km, this.density_g_cm3);
-    return this.bp.GetProb(this.nufrom, nuto);
   }
 };
