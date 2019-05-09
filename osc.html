@@ -92,36 +92,36 @@
     }
 
     .ColorWheel1 {
-      stroke: #845ec2;
+      stroke: #181994;
     }
     .ColorWheel2 {
-      stroke: #4b4453;
+      stroke: #a51760;
     }
     .ColorWheel3 {
-      stroke: #b0a8b9;
+      stroke: #b6b316;
     }
     .ColorWheel4 {
-      stroke: #c34a36;
+      stroke: #14c76b;
     }
     .ColorWheel5 {
       stroke: #ff8066;
     }
 
     circle.ColorWheel1 {
-      stroke: #845ec2;
-      fill: #845ec2;
+      stroke: #181994;
+      fill: #181994;
     }
     circle.ColorWheel2 {
-      stroke: #4b4453;
-      fill: #4b4453;
+      stroke: #a51760;
+      fill: #a51760;
     }
     circle.ColorWheel3 {
-      stroke: #b0a8b9;
-      fill: #b0a8b9;
+      stroke: #b6b316;
+      fill: #b6b316;
     }
     circle.ColorWheel4 {
-      stroke: #c34a36;
-      fill: #c34a36;
+      stroke: #14c76b;
+      fill: #14c76b;
     }
     circle.ColorWheel5 {
       stroke: #ff8066;
@@ -221,7 +221,7 @@
           </div>
         </div>
       </div>
-      <div class="col-2">
+      <div class="col-2" style="display:none;">
         <label for="from_pdg_selector">Osc. from:</label>
         <div id="from_pdg_selector" class="btn-group">
           <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -234,7 +234,7 @@
           </div>
         </div>
       </div>
-      <div class="col-2">
+      <div class="col-2" style="display:none;">
         <label for="to_pdg_selector">Osc. to:</label><br/>
         <div id="to_pdg_selector" class="btn-group">
           <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -256,7 +256,8 @@
     </div>
     <div class="row">
       <div class="col-8">
-        <div id="OscProbPlot"></div>
+        <div id="OscProbPlot_mu"></div>
+        <div id="OscProbPlot_e"></div>
       </div>
       <div class="col-4">
         <h5>Click/Drag to choose parameters</h5>

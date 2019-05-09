@@ -5,7 +5,7 @@ class OscProbPlot {
     this.hvr = undefined;
   }
 
-  DrawAxes(el, xmin_GeV = 0, xmax_GeV = 10, ymin = 0, ymax = 1) {
+  DrawAxes(el, xmin_GeV = 0, xmax_GeV = 10, ymin = 0, ymax = 1, ylabel="\\(P_{\\textrm{osc.}}\\)") {
     this.width = 500;
     this.height = 400;
     this.margin = {top : 20, right : 20, bottom : 75, left : 95};
@@ -37,7 +37,7 @@ class OscProbPlot {
     this.svg.append("g")
         .attr("class", "x_axis biglabel")
         .attr("transform", "translate(0," + this.height + ")")
-        .call(d3.axisBottom(xScale).tickArguments([ 8 ]));
+        .call(d3.axisBottom(xScale).tickArguments([ 5 ]));
 
     RenderLatexLabel(this.svg.append("text").text("\\(E_{\\nu} \\textrm{(GeV)}\\)"),
                 this.svg, "25ex", "10ex", this.width*0.4,this.height*0.72, 1.5, 1.5);
@@ -46,8 +46,8 @@ class OscProbPlot {
         .attr("class", "y_axis biglabel")
         .call(d3.axisLeft(yScale).tickArguments([ 3 ]));
 
-    RenderLatexLabel(this.svg.append("text").text("\\(P_{\\textrm{osc.}}\\)"),
-                this.svg, "25ex", "10ex", -50,-65, 1.5, 1.5, -90);
+    RenderLatexLabel(this.svg.append("text").text(ylabel),
+                this.svg, "25ex", "10ex", -100,-65, 1.5, 1.5, -90);
   }
 
   ScrubCurve(curve) {
