@@ -96,13 +96,17 @@ class PlotPoint {
 };
 
 class ConstraintAxes {
-  constructor(namef, titlef, minf, maxf, tickArgsf = [5], exp_scalef = 1) {
+  constructor(namef, titlef, minf, maxf, tickArgsf = [5], exp_scalef = 1, param_namef=undefined) {
     this.name = namef;
     this.title = titlef;
     this.min = minf * exp_scalef;
     this.max = maxf * exp_scalef;
     this.tickArgs = tickArgsf;
     this.exp_scale = exp_scalef;
+    this.param_name = param_namef;
+    if(this.param_name === undefined){
+      this.param_name = this.name;
+    }
   }
 };
 
@@ -128,8 +132,8 @@ class ConstraintWidget {
       this.last_OscParamPoint.remove();
     }
 
-    let x = oscParams.Get(this.xAxis.name);
-    let y = oscParams.Get(this.yAxis.name);
+    let x = oscParams.Get(this.xAxis.param_name);
+    let y = oscParams.Get(this.yAxis.param_name);
 
     this.last_OscParamPoint = this.svg.append("circle")
       .attr("class", `cpoint ${point_class}`)
@@ -206,8 +210,8 @@ class ConstraintWidget {
     RenderLatexLabel(this.svg.append("text").text(this.yAxis.title), this.svg,
       "25ex", "10ex", -120, -80, 1, 1, -90);
 
-    let xAxis_name = this.xAxis.name;
-    let yAxis_name = this.yAxis.name;
+    let xAxis_name = this.xAxis.param_name;
+    let yAxis_name = this.yAxis.param_name;
 
     function clickHandler(owner) {
       // Get x/y in axes coords
@@ -385,11 +389,11 @@ function InitializeConstraintWidgets(el, onchanged_callback, on_hover_callback,
 
   let ax_dcp_mpi_pi =
     new ConstraintAxes("dcp", "\\(\\delta_{\\rm {\\small cp}} /\\pi\\)",
-      -Math.PI, Math.PI, [2], 1.0 / Math.PI);
+      -Math.PI, Math.PI, [2], 1.0 / Math.PI, "dcp_mpi_pi");
 
   let ax_dcp_0_2pi =
     new ConstraintAxes("dcp", "\\(\\delta_{\\rm {\\small cp}} /\\pi\\)",
-      0, 2*Math.PI, [2], 1.0 / Math.PI);
+      0, 2*Math.PI, [2], 1.0 / Math.PI, "dcp_0_2pi");
 
 
   let ax_S2Th13 = new ConstraintAxes("S2Th13", GetParamLatexName("S2Th13"),

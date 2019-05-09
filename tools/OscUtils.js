@@ -1,5 +1,9 @@
 "use strict";
 
+function myfmod(a, b) {
+  return Number((a - (Math.floor(a / b) * b)).toPrecision(8));
+};
+
 /// Helper class for wrapping up the Prob3.js BargerPropagator into a slightly more easy-to-use interface (set experimental/osc parameters once, identify neutrinos with pdg numbers rather than Prob3++ enum, ...)
 class OscHelper {
   constructor() {
@@ -83,7 +87,20 @@ class OscParams {
     } else if (name === "S2Th13") {
       this.S2Th13 = value;
     } else if (name === "dcp") {
+      this.dcp = myfmod(value, 2 * Math.PI);
+      if (this.dcp < -Math.PI) {
+        this.dcp = (this.dcp + 2 * Math.PI);
+      }
+      if (this.dcp > Math.PI) {
+        this.dcp = (this.dcp - 2 * Math.PI);
+      }
+    } else if (name === "dcp_mpi_pi") {
       this.dcp = value;
+    } else if (name === "dcp_0_2pi") {
+      this.dcp = value;
+      if (this.dcp > Math.PI) {
+        this.dcp = (this.dcp - 2 * Math.PI);
+      }
     }
   }
 
@@ -96,6 +113,14 @@ class OscParams {
       return this.S2Th13;
     } else if (name === "dcp") {
       return this.dcp;
+    } else if (name === "dcp_mpi_pi") {
+      return this.dcp;
+    } else if (name === "dcp_0_2pi") {
+      let rtn = this.dcp;
+      if (rtn < 0) {
+        rtn = (2 * Math.PI + rtn);
+      }
+      return rtn;
     }
   }
 
