@@ -301,9 +301,9 @@ const OscProbConstraintData = {
   },
 
   KamLand : {
-    Expt : "Kamland",
-    Year : "",
-    Ref : "",
+    Expt : "KamLAND",
+    Year : "2013",
+    Ref : "PRD 88, 033001",
 
     S2Th12_Dm2_Sol : {
       68 : {
@@ -356,8 +356,8 @@ const OscProbConstraintData = {
 
   SolarGlobal : {
     Expt : "Solar Global",
-    Year : "",
-    Ref : "",
+    Year : "2016",
+    Ref : "PRD 94, 052010",
 
     S2Th12_Dm2_Sol : {
       68 : {
