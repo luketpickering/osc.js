@@ -82,10 +82,14 @@ class OscParams {
   Set(name, value) {
     if (name === "Dm2_Atm") {
       this.Dm2_Atm = value;
+    } else if (name === "Dm2_Sol") {
+      this.Dm2_21 = value;
     } else if (name === "S2Th23") {
       this.S2Th23 = value;
     } else if (name === "S2Th13") {
       this.S2Th13 = value;
+    } else if (name === "S2Th12") {
+      this.S2Th12 = value;
     } else if (name === "dcp") {
       this.dcp = myfmod(value, 2 * Math.PI);
       if (this.dcp < -Math.PI) {
@@ -107,10 +111,14 @@ class OscParams {
   Get(name) {
     if (name === "Dm2_Atm") {
       return this.Dm2_Atm;
+    } else if (name === "Dm2_Sol") {
+      return this.Dm2_21;
     } else if (name === "S2Th23") {
       return this.S2Th23;
     } else if (name === "S2Th13") {
       return this.S2Th13;
+    } else if (name === "S2Th12") {
+      return this.S2Th12;
     } else if (name === "dcp") {
       return this.dcp;
     } else if (name === "dcp_mpi_pi") {
@@ -155,6 +163,8 @@ function GetParamLatexName(name) {
     return '\\(\\Delta{}\\textrm{m}_{32}^{2}\\)';
   } else if (name === "Dm2_21") {
     return '\\(\\Delta{}\\textrm{m}_{21}^{2}\\)';
+  } else if (name === "Dm2_Sol") {
+    return GetParamLatexName("Dm2_21");
   } else if (name === "S2Th12") {
     return '\\(\\sin^{2}(\\theta_{12})\\)';
   } else if (name === "S2Th13") {
