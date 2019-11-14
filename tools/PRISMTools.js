@@ -34,12 +34,12 @@ class flux_matcher {
     }
 
     let upbin_oa = bigmat.n;
-    let oamax_bin = target.FindBin(this.oa_bins, oamax);
+    let oamax_bin = hist1D.FindBin(this.oa_bins, oamax);
     if (oamax_bin < (this.oa_bins.length - 1)) {
       upbin_oa = oamax_bin + 1;
     }
 
-    // console.log("ERange: ", emin, emax, "Bin range: ", lowbin, upbin, "max oa bin: ", oamax_bin, upbin_oa);
+    console.log("ERange: ", emin, emax, "Bin range: ", lowbin, upbin, "max oa bin: ", oamax_bin, upbin_oa);
 
     // console.log("Before slice: ", bigmat, targetvec);
 

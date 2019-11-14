@@ -139,7 +139,7 @@ class plotAxes {
     RenderLatexLabel(
       this.svg.append("text").text(
         y_axis.label),
-      this.svg, "30ex", "10ex", -275, -65, 1, 1, -90);
+      this.svg, "32ex", "10ex", -275, -65, 1, 1, -90);
   }
 
 
