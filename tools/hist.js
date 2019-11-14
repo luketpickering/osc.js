@@ -23,6 +23,17 @@ class hist1D {
     }
   }
 
+  Scale(sf) {
+    for (let bi_it = 0; bi_it < this.bincontent.length; ++bi_it) {
+      this.bincontent[bi_it] = this.bincontent[bi_it] * sf;
+    }
+    for (let bi_it = 0; bi_it < this.bincontent.length; ++bi_it) {
+      if (this.bincontent[bi_it] > this.ymax) {
+        this.ymax = this.bincontent[bi_it];
+      }
+    }
+  }
+
   Copy() {
     return new hist1D(this.x_bins, this.bincontent);
   }
@@ -67,7 +78,7 @@ function GetPointList(hist) {
     points.push([hist.x_bins[bi_it + 1], hist.bincontent[bi_it]]);
   }
 
-  points.push([hist.x_bins[this.x_bins.length - 1], 0]);
+  points.push([hist.x_bins[hist.x_bins.length - 1], 0]);
 
   return points;
 }
@@ -85,5 +96,29 @@ class hist2D {
 
     this.x_bins = Array.from(x_bins);
     this.y_bins = Array.from(y_bins);
+    this.bincontent = bincontent;
   }
+  Scale(sf) {
+    for (let xbi_it = 0; xbi_it < this.bincontent.length; ++xbi_it) {
+      for (let ubi_it = 0; ubi_it < this.bincontent[xbi_it].length; ++ubi_it) {
+        this.bincontent[xbi_it][ubi_it] = this.bincontent[xbi_it][ubi_it] * sf;
+      }
+    }
+  }
+
+  static FindBin(bin_edges, val) {
+    if (val < bin_edges[0]) {
+      return -1;
+    }
+    if (val >= bin_edges[bin_edges.length - 1]) {
+      return bin_edges.length;
+    }
+
+    for (let bi_it = 0; bi_it < bin_edges.length; ++bi_it) {
+      if (val < bin_edges[bi_it]) {
+        return (bi_it - 1);
+      }
+    }
+  }
+
 };

@@ -25,7 +25,7 @@ function RenderLatexLabel(text_d3, svg_d3, xwidth, ywidth, xoffset, yoffset,
 
 class axisDescriptor {
 
-  constructor(label, range, tickArguments = 4, cssclasses = "label") {
+  constructor(label, range, tickArguments = 4, cssclasses = ["label",]) {
     this.label = label;
     this.min = range[0];
     this.max = range[1];
@@ -127,24 +127,19 @@ class plotAxes {
       .attr("transform", "translate(0," + this.height + ")")
       .call(d3.axisBottom(xScale).tickArguments([x_axis.tickArguments]));
 
-    x_axis.renderToSVG(this.svg);
-
-    // RenderLatexLabel(
-    //   this.svg.append("text").text("\\(E_{\\nu} \\textrm{(GeV)}\\)"),
-    //   this.svg, "25ex", "10ex", this.width * 0.75, this.height * 1.1, 1, 1);
+    RenderLatexLabel(
+      this.svg.append("text").text(x_axis.label),
+      this.svg, "25ex", "10ex", this.width * 0.7, this.height * 1.1, 1, 1);
 
 
     this.svg.append("g")
       .attr("class", `y_axis ${y_axis.cssclasses.join(" ")}`)
       .call(d3.axisLeft(yScale).tickArguments([y_axis.tickArguments]));
 
-    y_axis.renderToSVG(this.svg);
-
-
-    // RenderLatexLabel(
-    //   this.svg.append("text").text(
-    //     "\\(\\Phi \\times{}10^{15} \\textrm{cm}^{-2}/\\textrm{POT}\\)"),
-    //   this.svg, "25ex", "10ex", -225, -65, 1, 1, -90);
+    RenderLatexLabel(
+      this.svg.append("text").text(
+        y_axis.label),
+      this.svg, "30ex", "10ex", -275, -65, 1, 1, -90);
   }
 
 
@@ -153,6 +148,7 @@ class plotAxes {
 class histPlot extends plotAxes {
 
   constructor(el, axis_descriptors, axis_scales = [1, 1]) {
+    super();
     this.HistPaths = [];
     this.Hists = [];
 
@@ -175,7 +171,7 @@ class histPlot extends plotAxes {
     this.DrawAxes(this.domElement, this.axis_descriptors, this.axis_scales);
     this.HistPaths = [];
     for (let i = 0; i < this.Hists.length; ++i) {
-      DrawHist(i);
+      this.DrawHist(i);
     }
   }
 
@@ -183,11 +179,13 @@ class histPlot extends plotAxes {
 
     let histCopy = hist.Copy();
 
-    if (histCopy.line_class == undefined) {
+    if (hist.line_class == undefined) {
       histCopy.line_class = "line";
+    } else {
+      histCopy.line_class = hist.line_class;
     }
 
-    Hists.push(histCopy);
+    this.Hists.push(histCopy);
 
     let needRedraw = false;
 
@@ -209,13 +207,13 @@ class histPlot extends plotAxes {
     if (needRedraw) {
       this.ForceRedraw();
     } else {
-      DrawHist(this.Hists.length-1);
+      this.DrawHist(this.Hists.length-1);
     }
 
   }
 
   DrawHist(n) {
-    if (n <= 0) {
+    if (n < 0) {
       return;
     }
 
@@ -223,13 +221,15 @@ class histPlot extends plotAxes {
       return;
     }
 
+    // console.log(this.Hists[n].GetPointList());
+
     this.HistPaths.push(this.svg.append("path")
-      .attr("d", this.lineGen(this.Hists[n].GetPointList()))
+      .attr("d", this.lineGen(GetPointList(this.Hists[n])))
       .attr("class", this.Hists[n].line_class));
   }
 
   ClearHist(n = 1) {
-    if (n <= 0) {
+    if (n < 0) {
       return;
     }
     if (n > this.HistPaths.length) {

@@ -9,7 +9,7 @@ class flux_matcher {
   }
 
 
-  flux_match(target, regfac = 1E-9, emin = 0, emax = 5, oamax = 40) {
+  flux_match(target, regfac = 1E-9, emin = 0, emax = 5, oamax = 33) {
 
     if (target.bincontent.length != this.mat.m) {
       console.log(`Cannot perform flux match. ND EBin count = ${this.mat.m}, FD EBin count = ${target.bincontent.length}`);
@@ -34,20 +34,20 @@ class flux_matcher {
     }
 
     let upbin_oa = bigmat.n;
-    let oamax_bin = flux_hist.FindBin(this.oa_bins, oamax);
+    let oamax_bin = target.FindBin(this.oa_bins, oamax);
     if (oamax_bin < (this.oa_bins.length - 1)) {
       upbin_oa = oamax_bin + 1;
     }
 
-    console.log("ERange: ", emin, emax, "Bin range: ", lowbin, upbin, "max oa bin: ", oamax_bin, upbin_oa);
+    // console.log("ERange: ", emin, emax, "Bin range: ", lowbin, upbin, "max oa bin: ", oamax_bin, upbin_oa);
 
-    console.log("Before slice: ", bigmat, targetvec);
+    // console.log("Before slice: ", bigmat, targetvec);
 
     bigmat = lalolib.get(bigmat, lalolib.range(emin_bin, emax_bin),
       lalolib.range(0, upbin_oa));
     targetvec = lalolib.get(targetvec, lalolib.range(emin_bin, emax_bin));
 
-    console.log("After slice: ", bigmat, targetvec);
+    // console.log("After slice: ", bigmat, targetvec);
 
     let RHS = lalolib.mul(lalolib.transpose(bigmat), targetvec);
 
@@ -68,9 +68,9 @@ class flux_matcher {
     let result = lalolib.solve(LHS, RHS);
     let smallmat = lalolib.entrywisemul(bigmat, 1.0 / bigfac);
 
-    let bf = new flux_hist(target.x_bins.slice(emin_bin, emax_bin + 1),
+    let bf = new hist1D(target.x_bins.slice(emin_bin, emax_bin + 1),
       lalolib.mul(smallmat, result));
-    let coeffs = new flux_hist(this.y_bins.slice(0, upbin_oa + 1),
+    let coeffs = new hist1D(this.oa_bins.slice(0, upbin_oa + 1),
       result);
     return {
       bf: bf,

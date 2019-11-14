@@ -10,26 +10,29 @@ class oscapp {
     this.Widgets = {};
     this.Widgets.OscProbPlot_mu_El = document.getElementById("OscProbPlot_mu");
     this.Widgets.OscProbPlot_e_El = document.getElementById("OscProbPlot_e");
+    this.Widgets.OscProbPlot_tau_El = document.getElementById("OscProbPlot_tau");
     this.Widgets.ConstraintControls =
       document.getElementById("ConstraintControls");
+
+    this.Widgets.PRISM = document.getElementById("PRISMItPlot");
 
     this.Controls = {};
     this.Controls.OscProbPlotAddBtn = document.getElementById("add_btn");
     this.Controls.OscProbPlotClearBtn = document.getElementById("clear_btn");
 
     this.Controls.neutrino_selector =
-      document.querySelector("#neutrino_selector");
-    // this.Controls.from_pdg_selector =
-    // document.querySelector("#from_pdg_selector");
-    // this.Controls.to_pdg_selector =
-    // document.querySelector("#to_pdg_selector");
-    this.Controls.baseline_input = document.querySelector("#baseline_input");
+      document.getElementById("neutrino_selector");
+    this.Controls.baseline_input = document.getElementById("baseline_input");
 
-    this.Controls.regfac_input = document.querySelector("#regfac_input");
-    this.Controls.emin_input = document.querySelector("#emin_input");
-    this.Controls.emax_input = document.querySelector("#emax_input");
+    this.Controls.mu_vis_btn = document.getElementById("mu_vis_btn");
+    this.Controls.e_vis_btn = document.getElementById("e_vis_btn");
+    this.Controls.tau_vis_btn = document.getElementById("tau_vis_btn");
+
+    this.Controls.regfac_input = document.getElementById("regfac_input");
+    this.Controls.emin_input = document.getElementById("emin_input");
+    this.Controls.emax_input = document.getElementById("emax_input");
     this.Controls.maxoffaxis_input =
-      document.querySelector("#maxoffaxis_input");
+      document.getElementById("maxoffaxis_input");
 
     this.Expt = {};
     this.Expt.IsMatter = 1;
@@ -38,10 +41,10 @@ class oscapp {
     this.Expt.baseline_km = 1300;
 
     this.PRISM = {};
-    this.PRISM.regfac = 1E-9;
-    this.PRISM.emin_prism = 0;
-    this.PRISM.emax_prism = 5;
-    this.PRISM.maxoffaxis = 40;
+    this.PRISM.regfac = 5E-9;
+    this.PRISM.emin_prism = 0.5;
+    this.PRISM.emax_prism = 3.5;
+    this.PRISM.maxoffaxis = 33;
 
     this.color_class_wheel = [
       "ColorWheel1", "ColorWheel2", "ColorWheel3", "ColorWheel4", "ColorWheel5"
@@ -95,66 +98,50 @@ class oscapp {
     this.HookupExptControls();
     this.InitializeConstraintControls();
     this.HookupOscParamControls();
+    this.HookupPRISMControls();
 
     this.Widgets.OscProbPlot_mu = new OscProbPlot();
     this.Widgets.OscProbPlot_mu.DrawAxes(this.Widgets.OscProbPlot_mu_El, 0.1,
-      5,0,1,"\\(P(\\nu_{\\mu}\\rightarrow\\nu_{\\mu})\\)");
+      5, 0, 1, "\\(P(\\nu_{\\mu}\\rightarrow\\nu_{\\mu})\\)");
 
     this.Widgets.OscProbPlot_e = new OscProbPlot();
     this.Widgets.OscProbPlot_e.DrawAxes(this.Widgets.OscProbPlot_e_El, 0.1, 5,
       0, 0.5, "\\(P(\\nu_{\\mu}\\rightarrow\\nu_{e})\\)");
 
-    // AddCurve(op_plot, op, 1);
-    //
-    // let fluxhistplot_el = document.getElementById("FluxHistPlot");
-    // let FD_numode_numu_flux = new flux_hist(DUNE_flux.FD.numode.numu.bins_e,
-    // DUNE_flux.FD.numode.numu.binc);
-    //
-    // let ND_numuode_numu_flux = new
-    // OffAxis_flux_hist(DUNE_flux.ND.numode.numu.bins_e,
-    // DUNE_flux.ND.numode.numu.bins_OA, DUNE_flux.ND.numode.numu.binc);
-    //
-    // let fp = new flux_plot();
-    // let FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
-    // FD_numode_numu_flux_osc.line_class = "blue_line";
-    // FD_numode_numu_flux.line_class = "red_line";
-    // fp.DrawAxes(fluxhistplot_el, FD_numode_numu_flux, 1E15);
-    // fp.Draw(FD_numode_numu_flux);
-    // FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
-    // fp.Draw(FD_numode_numu_flux_osc);
-    // let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc,
-    // regfac, emin_prism, emax_prism, maxoffaxis); let bfflux = bfbinc.bf;
-    // bfflux.line_class = "orange_line";
-    // console.log(bfflux);
-    // fp.Draw(bfflux);
-    //
-    // let lincombplot_el = document.getElementById("LinCombPlot");
-    //
-    // let lcp = new off_axis_lincomb_plot();
-    // let lincomb = bfbinc.coeffs;
-    // lincomb.line_class = "orange_line";
-    // lcp.DrawAxes(lincombplot_el, lincomb, 1E5, 1);
-    // lcp.Draw(lincomb);
-    //
-    // document.getElementById("oscflux_btn").onclick =
-    //   function() {
-    //     FD_numode_numu_flux_osc = FD_numode_numu_flux.Copy();
-    //     FD_numode_numu_flux_osc.line_class = "blue_line";
-    //     FD_numode_numu_flux_osc.Oscillate(pdg_from, pdg_to, baseline_km, op);
-    //     fp.Clear(2);
-    //     fp.Draw(FD_numode_numu_flux_osc);
-    //     console.log("Min/Max: ", emin_prism, emax_prism);
-    //     let bfbinc = ND_numuode_numu_flux.flux_match(FD_numode_numu_flux_osc,
-    //     regfac, emin_prism, emax_prism, maxoffaxis); let bfflux = bfbinc.bf;
-    //     bfflux.line_class = "orange_line";
-    //     fp.Draw(bfflux);
-    //
-    //     lcp.Clear(1);
-    //     let lincomb = bfbinc.coeffs;
-    //     lincomb.line_class = "orange_line";
-    //     lcp.Draw(lincomb);
-    //   };
-    //
+    this.Widgets.OscProbPlot_tau = new OscProbPlot();
+    this.Widgets.OscProbPlot_tau.DrawAxes(this.Widgets.OscProbPlot_tau_El, 0.1, 5, 0, 1, "\\(P(\\nu_{\\mu}\\rightarrow\\nu_{\\tau})\\)");
+
+    this.Controls.mu_vis_btn.addEventListener("click", () => {
+      if (this.Widgets.OscProbPlot_mu_El.style.display === "none") {
+        this.Widgets.OscProbPlot_mu_El.style.display = "";
+        this.Controls.mu_vis_btn.innerHTML = "Hide muon disappearance probability"
+      } else {
+        this.Widgets.OscProbPlot_mu_El.style.display = "none";
+        this.Controls.mu_vis_btn.innerHTML = "Show muon disappearance probability"
+
+      }
+    });
+    this.Controls.e_vis_btn.addEventListener("click", () => {
+      if (this.Widgets.OscProbPlot_e_El.style.display === "none") {
+        this.Widgets.OscProbPlot_e_El.style.display = "";
+        this.Controls.e_vis_btn.innerHTML = "Hide electron appearance probability"
+      } else {
+        this.Widgets.OscProbPlot_e_El.style.display = "none";
+        this.Controls.e_vis_btn.innerHTML = "Show electron appearance probability"
+
+      }
+    });
+    this.Controls.tau_vis_btn.addEventListener("click", () => {
+      if (this.Widgets.OscProbPlot_tau_El.style.display === "none") {
+        this.Widgets.OscProbPlot_tau_El.style.display = "";
+        this.Controls.tau_vis_btn.innerHTML = "Hide tau appearance probability"
+      } else {
+        this.Widgets.OscProbPlot_tau_El.style.display = "none";
+        this.Controls.tau_vis_btn.innerHTML = "Show tau appearance probability"
+
+      }
+    });
+
   }
 
   NotifyExptChange() {
@@ -182,22 +169,6 @@ class oscapp {
       });
     });
 
-    // this.Controls.from_pdg_selector.querySelectorAll("p").forEach((el) => {
-    //   el.addEventListener("click", () => {
-    //     el.parentNode.parentNode.querySelector("button").innerHTML =
-    //     el.innerHTML; this.Expt.pdg_from = parseInt(el.dataset.nupdg);
-    //     this.NotifyExptChange();
-    //   });
-    // });
-    //
-    // this.Controls.to_pdg_selector.querySelectorAll("p").forEach((el) => {
-    //   el.addEventListener("click", () => {
-    //     el.parentNode.parentNode.querySelector("button").innerHTML =
-    //     el.innerHTML; this.Expt.pdg_to = parseInt(el.dataset.nupdg);
-    //     this.NotifyExptChange();
-    //   });
-    // });
-
     this.Controls.baseline_input.addEventListener("change", () => {
       this.Expt.baseline_km = parseFloat(this.Controls.baseline_input.value);
       this.NotifyExptChange();
@@ -211,6 +182,10 @@ class oscapp {
     this.AddCurve(this.Widgets.OscProbPlot_mu, expt, this.OscParams, 1);
     expt.pdg_to = 12 * expt.IsMatter;
     this.AddCurve(this.Widgets.OscProbPlot_e, expt, this.OscParams, 1);
+    expt.pdg_to = 16 * expt.IsMatter;
+    this.AddCurve(this.Widgets.OscProbPlot_tau, expt, this.OscParams, 1);
+
+    this.UpdatePRISM();
   }
 
   InitializeConstraintControls() { // On click
@@ -237,6 +212,8 @@ class oscapp {
         this.AddCurve(this.Widgets.OscProbPlot_mu, expt, op_cpy, 2);
         expt.pdg_to = 12 * expt.IsMatter;
         this.AddCurve(this.Widgets.OscProbPlot_e, expt, op_cpy, 2);
+        expt.pdg_to = 16 * expt.IsMatter;
+        this.AddCurve(this.Widgets.OscProbPlot_tau, expt, op_cpy, 2);
       },
       () => { // Off drag
         this.Widgets.OscProbPlot_e.RemoveHover();
@@ -253,6 +230,8 @@ class oscapp {
       this.AddCurve(this.Widgets.OscProbPlot_mu, expt, this.OscParams);
       expt.pdg_to = 12 * expt.IsMatter;
       this.AddCurve(this.Widgets.OscProbPlot_e, expt, this.OscParams);
+      expt.pdg_to = 16 * expt.IsMatter;
+      this.AddCurve(this.Widgets.OscProbPlot_tau, expt, this.OscParams);
 
       this.wheel_idx = (this.wheel_idx + 1) % this.color_class_wheel.length;
       SetConstrainWidgetPoints();
@@ -260,27 +239,115 @@ class oscapp {
     this.Controls.OscProbPlotClearBtn.addEventListener("click", () => {
       this.Widgets.OscProbPlot_e.ClearAll();
       this.Widgets.OscProbPlot_mu.ClearAll();
+      this.Widgets.OscProbPlot_tau.ClearAll();
       this.wheel_idx = 0;
       ClearConstrainWidgetPoints();
     });
   }
 
+  UpdatePRISM() {
+    let OscFluxHist = OscillateHist1D(14, 14,
+      1300, this.OscParams, this.PRISM.FD_numode_numu_flux);
+    console.log(this.color_class_wheel[this.wheel_idx]);
+    OscFluxHist.line_class = ["osc_line", this.color_class_wheel[this.wheel_idx]].join(" ");
+
+    if (this.PRISM.PRISMItPlot.Hists.length > 1) {
+      this.PRISM.PRISMItPlot.ClearHist();
+      this.PRISM.PRISMItPlot.ClearHist();
+    }
+
+    this.PRISM.PRISMItPlot.AddHist(OscFluxHist);
+
+    let flux_match_res = this.PRISM.fm.flux_match(OscFluxHist, this.PRISM.regfac,
+      this.PRISM.emin_prism,
+      this.PRISM.emax_prism,
+      this.PRISM.maxoffaxis);
+
+    flux_match_res.bf.line_class = "red_line";
+    this.PRISM.PRISMItPlot.AddHist(flux_match_res.bf);
+
+    flux_match_res.coeffs.line_class = "red_line";
+
+    this.PRISM.coeffplot.ClearHist();
+    this.PRISM.coeffplot.AddHist(flux_match_res.coeffs);
+
+  }
+
   HookupPRISMControls() {
+
+
+    this.Widgets.PRISMRow_el = document.getElementById("PRISMRow");
+    this.Controls.prism_vis_btn = document.getElementById("prism_vis_btn");
+
+    this.Controls.prism_vis_btn.addEventListener("click", () => {
+      if (this.Widgets.PRISMRow_el.style.display === "none") {
+        this.Widgets.PRISMRow_el.style.display = "";
+        this.Controls.prism_vis_btn.innerHTML = "Hide PRISM"
+      } else {
+        this.Widgets.PRISMRow_el.style.display = "none";
+        this.Controls.prism_vis_btn.innerHTML = "Show PRISM"
+
+      }
+    });
+
     this.Controls.regfac_input.addEventListener("change", () => {
       let chosen = parseFloat(this.Controls.regfac_input.value);
-      regfac = chosen;
+      this.PRISM.regfac = chosen;
+      this.UpdatePRISM();
     });
     this.Controls.emin_input.addEventListener("change", () => {
       let chosen = parseFloat(this.Controls.emin_input.value);
-      emin_prism = chosen;
+      if (chosen > this.PRISM.emax_prism) {
+        chosen = this.PRISM.emax_prism;
+      } else if (chosen < 0) {
+        chosen = 0;
+      }
+      this.Controls.emin_input.value = chosen;
+      this.PRISM.emin_prism = chosen;
+      this.UpdatePRISM();
     });
     this.Controls.emax_input.addEventListener("change", () => {
       let chosen = parseFloat(this.Controls.emax_input.value);
-      emax_prism = chosen;
+      if (chosen > 5) {
+        chosen = 5;
+      } else if (chosen < 0) {
+        chosen = 0;
+      }
+      this.Controls.emax_input.value = chosen;
+      this.PRISM.emax_prism = chosen;
+      this.UpdatePRISM();
     });
     this.Controls.maxoffaxis_input.addEventListener("change", () => {
       let chosen = parseFloat(this.Controls.maxoffaxis_input.value);
-      maxoffaxis = chosen;
+      if (chosen > 33) {
+        chosen = 33;
+      } else if (chosen < 0) {
+        chosen = 0;
+      }
+      this.Controls.maxoffaxis_input.value = chosen;
+      this.PRISM.maxoffaxis = chosen;
+      this.UpdatePRISM();
     });
+
+    this.PRISM.PRISMItPlot_el = document.getElementById("PRISMItPlot");
+
+    this.PRISM.FD_numode_numu_flux = new hist1D(DUNE_flux.FD.numode.numu.bins_e,
+      DUNE_flux.FD.numode.numu.binc);
+    this.PRISM.FD_numode_numu_flux.line_class = "grey_line";
+
+    this.PRISM.ND_numuode_numu_flux = new
+      hist2D(DUNE_flux.ND.numode.numu.bins_e,
+        DUNE_flux.ND.numode.numu.bins_OA, DUNE_flux.ND.numode.numu.binc);
+
+    this.PRISM.fm = new flux_matcher(this.PRISM.ND_numuode_numu_flux);
+
+    this.PRISM.PRISMItPlot = new histPlot(this.PRISM.PRISMItPlot_el, [new axisDescriptor("\\(\\it{E}_{\\nu} (\\textrm{GeV})\\)", [0, 5]), new axisDescriptor("\\(\\Phi_{\\nu}^{\\textrm{FD}} \\times 10^{15} (\\textrm{cm}^{-2} \\textrm{/GeV/POT})\\)", [0, this.PRISM.FD_numode_numu_flux.ymax * 1.2])], [1, 1E15]);
+
+    this.PRISM.PRISMItPlot.AddHist(this.PRISM.FD_numode_numu_flux);
+
+    this.PRISM.coeffplot_el = document.getElementById("PRISMItPlot");
+
+    this.PRISM.coeffplot = new histPlot(this.PRISM.coeffplot_el, [new axisDescriptor("\\(\\textrm{Off axis position (m)}\\)", [-0.5, 33.5]), new axisDescriptor("\\(\\textrm{Sample weight} \\times 10^{7}\\)", [-3E-7, 3E-7])], [1, 1E7]);
+
   }
 };
