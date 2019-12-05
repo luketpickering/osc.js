@@ -59,6 +59,31 @@ class ndapp {
       line_class: this.color_class_wheel[this.wheel_idx + 3]
     };
 
+    let ND280FN = {
+      meta: {
+        id: 0,
+        name: "ND280FN"
+      },
+      data: [],
+      line_class: this.color_class_wheel[this.wheel_idx + 1] + " dashed_line"
+    };
+    let WAGASCIFN = {
+      meta: {
+        id: 0,
+        name: "WAGASCIFN"
+      },
+      data: [],
+      line_class: this.color_class_wheel[this.wheel_idx + 2] + " dashed_line"
+    };
+    let INGRIDFN = {
+      meta: {
+        id: 0,
+        name: "INGRIDFN"
+      },
+      data: [],
+      line_class: this.color_class_wheel[this.wheel_idx + 3] + " dashed_line"
+    };
+
     let ND280W = params["ND280"];
     let WAGASCIW = params["WAGASCI"];
     let INGRIDW = params["INGRID"];
@@ -72,6 +97,10 @@ class ndapp {
         ND280F.data.push([p[0], this.ND280Flux[i] * ND280W * 1E-6]);
         WAGASCIF.data.push([p[0], this.WAGASCIFlux[i] * WAGASCIW * 1E-6]);
         INGRIDF.data.push([p[0], this.INGRIDFlux[i] * INGRIDW * 1E-6]);
+
+        ND280FN.data.push([p[0], this.ND280Flux[i] * 1E-6]);
+        WAGASCIFN.data.push([p[0], this.WAGASCIFlux[i] * 1E-6]);
+        INGRIDFN.data.push([p[0], this.INGRIDFlux[i] * 1E-6]);
       }
     }
 
@@ -79,6 +108,10 @@ class ndapp {
       plot.AddHover(combflux);
     } else if (curve_state === 1) {
       plot.ClearAll();
+      plot.AddCurve(ND280FN);
+      plot.AddCurve(WAGASCIFN);
+      plot.AddCurve(INGRIDFN);
+
       plot.ShowNext(combflux);
       plot.AddCurve(ND280F);
       plot.AddCurve(WAGASCIF);
@@ -93,7 +126,7 @@ class ndapp {
     this.InitializeConstraintControls();
 
     this.Widgets.NDCombPlot = new OscProbPlot();
-    this.Widgets.NDCombPlot.DrawAxes(this.Widgets.NDCombPlot_El, 0, 5, -10, 20, "\\(\\textrm{Combined flux}\\)");
+    this.Widgets.NDCombPlot.DrawAxes(this.Widgets.NDCombPlot_El, 0, 5, -3, 5, "\\(\\textrm{Combined flux}\\)");
 
     AddNewConstrainWidgetPoints(this.coeffs);
     this.AddCurve(this.Widgets.NDCombPlot, this.coeffs, 1);

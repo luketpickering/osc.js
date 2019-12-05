@@ -171,11 +171,11 @@ var constraint_plots = [];
 function InitializeNDConstraintWidgets(el, onchanged_callback, on_hover_callback,
   off_hover_callback) {
 
-  let ax_ND280 = new ConstraintAxes("ND280", "\\(\\textrm{ND280}\\)", -5,5, [3], 1, "ND280");
+  let ax_ND280 = new ConstraintAxes("ND280", "\\(\\textrm{ND280}\\)", -1,1, [3], 1, "ND280");
 
-  let ax_WAGASCI = new ConstraintAxes("WAGASCI", "\\(\\textrm{WAGASCI}\\)", -5, 5, [3], 1, "WAGASCI");
+  let ax_WAGASCI = new ConstraintAxes("WAGASCI", "\\(\\textrm{WAGASCI}\\)", -1, 1, [3], 1, "WAGASCI");
 
-  let ax_INGRID = new ConstraintAxes("INGRID", "\\(\\textrm{INGRID}\\)", -5, 5, [3], 1, "INGRID");
+  let ax_INGRID = new ConstraintAxes("INGRID", "\\(\\textrm{INGRID}\\)", -1, 1, [3], 1, "INGRID");
 
   constraint_plots.push(new ConstraintWidget(
     ax_ND280, ax_WAGASCI));
