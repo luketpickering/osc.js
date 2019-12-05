@@ -9,6 +9,11 @@ class ndapp {
     this.Widgets.ConstraintControls =
       document.getElementById("ConstraintControls");
 
+    this.Controls = {};
+    this.Controls.ND280_El = document.getElementById("ND280_input");
+    this.Controls.WAGASCI_El = document.getElementById("WAGASCI_input");
+    this.Controls.INGRID_El = document.getElementById("INGRID_input");
+
     this.ebinning = [0, 0.111111, 0.222222, 0.333333, 0.444444, 0.555556, 0.666667, 0.777778, 0.888889, 1, 1.11111, 1.22222, 1.33333, 1.44444, 1.55556, 1.66667, 1.77778, 1.88889, 2, 2.11111, 2.22222, 2.33333, 2.44444, 2.55556, 2.66667, 2.77778, 2.88889, 3, 3.11111, 3.22222, 3.33333, 3.44444, 3.55556, 3.66667, 3.77778, 3.88889, 4, 4.11111, 4.22222, 4.33333, 4.44444, 4.55556, 4.66667, 4.77778, 4.88889, 5];
 
     this.ND280Flux = [62331, 250248, 615333, 1.18128e+06, 1.81861e+06, 1.86869e+06, 1.42664e+06, 827517, 422623, 241665, 163120, 121161, 97147, 78615, 64391, 55346, 49211, 43076, 37606, 35057, 29522, 27751, 25408, 23698, 22977, 20517, 19658, 19880, 17788, 17849, 16626, 16418, 15611, 14884, 14699, 13962, 13388, 12746, 12416, 11738, 10945, 10710, 9968, 9238, 9022];
@@ -126,9 +131,38 @@ class ndapp {
     this.InitializeConstraintControls();
 
     this.Widgets.NDCombPlot = new OscProbPlot();
-    this.Widgets.NDCombPlot.DrawAxes(this.Widgets.NDCombPlot_El, 0, 5, -3, 5, "\\(\\textrm{Combined flux}\\)");
+    this.Widgets.NDCombPlot.DrawAxes(this.Widgets.NDCombPlot_El, 0, 3, -3, 5, "\\(\\textrm{Combined flux}\\)");
 
-    AddNewConstrainWidgetPoints(this.coeffs);
+    this.Update();
+
+    this.Controls.ND280_El.addEventListener("change", () => {
+      let chosen = parseFloat(this.Controls.ND280_El.value);
+      this.coeffs["ND280"] = chosen;
+      this.Update();
+    });
+    this.Controls.WAGASCI_El.addEventListener("change", () => {
+      let chosen = parseFloat(this.Controls.WAGASCI_El.value);
+      this.coeffs["WAGASCI"] = chosen;
+      this.Update();
+    });
+    this.Controls.INGRID_El.addEventListener("change", () => {
+      let chosen = parseFloat(this.Controls.INGRID_El.value);
+      this.coeffs["INGRID"] = chosen;
+      this.Update();
+    });
+  }
+
+  Update() {
+    let coeffcopy = Object.create(this.coeffs);
+
+    coeffcopy.point_class = this.color_class_wheel[this.wheel_idx];
+
+    AddNewConstrainWidgetPoints(coeffcopy);
+
+    this.Controls.ND280_El.value = this.coeffs["ND280"];
+    this.Controls.WAGASCI_El.value = this.coeffs["WAGASCI"];
+    this.Controls.INGRID_El.value = this.coeffs["INGRID"];
+
     this.AddCurve(this.Widgets.NDCombPlot, this.coeffs, 1);
 
   }
@@ -145,6 +179,10 @@ class ndapp {
         coeffcopy.point_class = this.color_class_wheel[this.wheel_idx];
 
         this.AddCurve(this.Widgets.NDCombPlot, coeffcopy, 1);
+
+        this.Controls.ND280_El.value = this.coeffs["ND280"];
+        this.Controls.WAGASCI_El.value = this.coeffs["WAGASCI"];
+        this.Controls.INGRID_El.value = this.coeffs["INGRID"];
 
         return coeffcopy;
       },

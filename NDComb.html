@@ -173,9 +173,6 @@
   <!-- d3.js -->
   <script src="https://d3js.org/d3.v5.min.js"></script>
 
-  <!-- LALOLib -->
-  <script src="http://mlweb.loria.fr/lalolib-noglpk-module.min.js"></script>
-
   <!-- Local code -->
   <script src="tools/NDConstraintWidget.js"></script>
   <script src="tools/plot.js"></script>
@@ -224,15 +221,40 @@
 
     <div class="row">
       <div class="col-8">
+
         <div class="row">
           <div id="NDCombPlot"></div>
         </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label for="ND280_input">ND280 weight</label>
+            <input type="text" class="form-control" id="ND280_input" value="1">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label for="WAGASCI_input">WAGASCI weight</label>
+            <input type="text" class="form-control" id="WAGASCI_input" value="1">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label for="INGRID_input">INGRID weight</label>
+            <input type="text" class="form-control" id="INGRID_input" value="1">
+          </div>
+        </div>
+
       </div>
+
       <div class="col-4">
-        <h5>Click/Drag to choose Coefficients</h5>
-        <div id="ConstraintControls"></div>
-      </div>
-    </div>
+          <h5>Click/Drag to choose Coefficients</h5>
+          <div id="ConstraintControls"></div>
+        </div>
+    </div> <!--end row -->
+  </div>
 
 
   </div>
