@@ -6,6 +6,7 @@ class ndapp {
 
     this.Widgets = {};
     this.Widgets.NDCombPlot_El = document.getElementById("NDCombPlot");
+    this.Widgets.NDCombPlot_Nom_El = document.getElementById("NDCombPlot_Nom");
     this.Widgets.ConstraintControls =
       document.getElementById("ConstraintControls");
 
@@ -29,6 +30,11 @@ class ndapp {
   }
 
   AddCurve(plot, params, curve_state = 0) {
+
+    let add_extra = curve_state > 2;
+    if (add_extra) {
+      curve_state -= 2;
+    }
 
     let combflux = {
       meta: {
@@ -118,9 +124,11 @@ class ndapp {
       plot.AddCurve(INGRIDFN);
 
       plot.ShowNext(combflux);
-      plot.AddCurve(ND280F);
-      plot.AddCurve(WAGASCIF);
-      plot.AddCurve(INGRIDF);
+      if (add_extra) {
+        plot.AddCurve(ND280F);
+        plot.AddCurve(WAGASCIF);
+        plot.AddCurve(INGRIDF);
+      }
     } else {
       plot.AddCurve(combflux);
     }
@@ -132,6 +140,9 @@ class ndapp {
 
     this.Widgets.NDCombPlot = new OscProbPlot();
     this.Widgets.NDCombPlot.DrawAxes(this.Widgets.NDCombPlot_El, 0, 3, -3, 5, "\\(\\textrm{Combined flux}\\)");
+
+    this.Widgets.NDCombPlot_Nom = new OscProbPlot();
+    this.Widgets.NDCombPlot_Nom.DrawAxes(this.Widgets.NDCombPlot_Nom_El, 0, 3, -3, 5, "\\(\\textrm{Combined flux}\\)");
 
     this.Update();
 
@@ -163,7 +174,8 @@ class ndapp {
     this.Controls.WAGASCI_El.value = this.coeffs["WAGASCI"];
     this.Controls.INGRID_El.value = this.coeffs["INGRID"];
 
-    this.AddCurve(this.Widgets.NDCombPlot, this.coeffs, 1);
+    this.AddCurve(this.Widgets.NDCombPlot, this.coeffs, 3);
+    this.AddCurve(this.Widgets.NDCombPlot_Nom, this.coeffs, 1);
 
   }
 
@@ -178,7 +190,8 @@ class ndapp {
 
         coeffcopy.point_class = this.color_class_wheel[this.wheel_idx];
 
-        this.AddCurve(this.Widgets.NDCombPlot, coeffcopy, 1);
+        this.AddCurve(this.Widgets.NDCombPlot, coeffcopy, 3);
+        this.AddCurve(this.Widgets.NDCombPlot_Nom, coeffcopy, 1);
 
         this.Controls.ND280_El.value = this.coeffs["ND280"];
         this.Controls.WAGASCI_El.value = this.coeffs["WAGASCI"];
@@ -192,7 +205,8 @@ class ndapp {
         coeffcopy[chg_par.x_name] = chg_par.x_value
         coeffcopy[chg_par.y_name] = chg_par.y_value
 
-        this.AddCurve(this.Widgets.NDCombPlot, coeffcopy, 2);
+        this.AddCurve(this.Widgets.NDCombPlot, coeffcopy, 4);
+        this.AddCurve(this.Widgets.NDCombPlot_Nom, coeffcopy, 2);
       },
       () => { // Off drag
         this.Widgets.NDCombPlot.RemoveHover();
