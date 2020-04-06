@@ -4,7 +4,9 @@ function myfmod(a, b) {
   return Number((a - (Math.floor(a / b) * b)).toPrecision(8));
 };
 
-/// Helper class for wrapping up the Prob3.js BargerPropagator into a slightly more easy-to-use interface (set experimental/osc parameters once, identify neutrinos with pdg numbers rather than Prob3++ enum, ...)
+/// Helper class for wrapping up the Prob3.js BargerPropagator into a slightly
+/// more easy-to-use interface (set experimental/osc parameters once, identify
+/// neutrinos with pdg numbers rather than Prob3++ enum, ...)
 class OscHelper {
   constructor() {
     this.bp = new BargerPropagator();
@@ -36,8 +38,8 @@ class OscHelper {
       return;
     }
     this.bp.SetMNS(osc_params.S2Th12, osc_params.S2Th13, osc_params.S2Th23,
-      osc_params.Dm2_21, osc_params.Dm2_Atm, osc_params.dcp, 1,
-      true, this.nufrom);
+                   osc_params.Dm2_21, osc_params.Dm2_Atm, osc_params.dcp, 1,
+                   true, this.nufrom);
 
     this.baseline_km = baseline_km;
     this.density_g_cm3 = density_g_cm3;
@@ -46,7 +48,7 @@ class OscHelper {
   GetProb(Energy_GeV, nu_pdg_to) {
     let nuto = OscHelper.GetProb3NuTypeFromPDG(nu_pdg_to);
     if ((this.nufrom === 0) || (nuto === 0) ||
-      !((nuto < 0) == (this.nufrom < 0))) {
+        !((nuto < 0) == (this.nufrom < 0))) {
       return 0;
     }
     this.bp.SetEnergy(Energy_GeV);
@@ -55,7 +57,7 @@ class OscHelper {
   }
 };
 
-///Helper class for wrapping blob of oscillation parameters
+/// Helper class for wrapping blob of oscillation parameters
 class OscParams {
   constructor() {
     this.S2Th12 = 0.297;
@@ -82,8 +84,12 @@ class OscParams {
   Set(name, value) {
     if (name === "Dm2_Atm") {
       this.Dm2_Atm = value;
+    } else if (name === "Dm2_Atm_pere3") {
+      this.Dm2_Atm = value * 1.0E-3;
     } else if (name === "Dm2_Sol") {
       this.Dm2_21 = value;
+    } else if (name === "Dm2_Sol_pere5") {
+      this.Dm2_21 = value * 1.0E-5;
     } else if (name === "S2Th23") {
       this.S2Th23 = value;
     } else if (name === "S2Th13") {
@@ -105,14 +111,23 @@ class OscParams {
       if (this.dcp > Math.PI) {
         this.dcp = (this.dcp - 2 * Math.PI);
       }
+    } else if (name === "dcp_perpi") {
+      this.dcp = value * Math.PI;
+      if (this.dcp > Math.PI) {
+        this.dcp = (this.dcp - 2 * Math.PI);
+      }
     }
   }
 
   Get(name) {
     if (name === "Dm2_Atm") {
       return this.Dm2_Atm;
+    } else if (name === "Dm2_Atm_pere3") {
+      return this.Dm2_Atm * 1.0E3;
     } else if (name === "Dm2_Sol") {
       return this.Dm2_21;
+    } else if (name === "Dm2_Sol_pere5") {
+      return this.Dm2_21 * 1.0E5;
     } else if (name === "S2Th23") {
       return this.S2Th23;
     } else if (name === "S2Th13") {
@@ -129,40 +144,90 @@ class OscParams {
         rtn = (2 * Math.PI + rtn);
       }
       return rtn;
+    } else if (name === "dcp_perpi") {
+      let rtn = this.dcp;
+      if (rtn < 0) {
+        rtn = (2 * Math.PI + rtn);
+      }
+      rtn = rtn / Math.PI;
+      return rtn;
+    }
+  }
+  GetPrecision(name, prec) {
+    if (name === "Dm2_Atm") {
+      return this.Dm2_Atm.toExponential(prec);
+    } else if (name === "Dm2_Atm_pere3") {
+      return (this.Dm2_Atm * 1.0E3).toPrecision(prec);
+    } else if (name === "Dm2_Sol") {
+      return this.Dm2_21.toExponential(prec);
+    } else if (name === "Dm2_Sol_pere5") {
+      return (this.Dm2_21 * 1.0E5).toPrecision(prec);
+    } else if (name === "S2Th23") {
+      return this.S2Th23.toPrecision(prec);
+    } else if (name === "S2Th13") {
+      return this.S2Th13.toPrecision(prec);
+    } else if (name === "S2Th12") {
+      return this.S2Th12.toPrecision(prec);
+    } else if (name === "dcp") {
+      return this.dcp.toPrecision(prec);
+    } else if (name === "dcp_mpi_pi") {
+      return this.dcp.toPrecision(prec);
+    } else if (name === "dcp_0_2pi") {
+      let rtn = this.dcp;
+      if (rtn < 0) {
+        rtn = (2 * Math.PI + rtn);
+      }
+      return rtn.toPrecision(prec);
+    } else if (name === "dcp_perpi") {
+      let rtn = this.dcp;
+      if (rtn < 0) {
+        rtn = (2 * Math.PI + rtn);
+      }
+      rtn = rtn / Math.PI;
+      return rtn.toPrecision(prec);
     }
   }
 
+  to_string() {
+    return `Dm2_Atm: ${this.Get("Dm2_Atm")}, Dm2_Sol: ${
+        this.Get("Dm2_Sol")}, S2Th23: ${this.Get("S2Th23")}, S2Th13: ${
+        this.Get("S2Th13")}, S2Th12: ${this.Get("S2Th12")}, dcp: ${
+        this.Get("dcp")}`;
+  }
 };
-
 
 function GetNuLatexName(nu_pdg) {
   switch (nu_pdg) {
-    case -12: {
-      return "\\(\\bar{\\nu_{e}}\\)";
-    }
-    case -14: {
-      return "\\(\\bar{\\nu_{\\mu}}\\)";
-    }
-    case -16: {
-      return "\\(\\bar{\\nu_{\\tau}}\\)";
-    }
-    case 12: {
-      return "\\(\\nu_{e}\\)";
-    }
-    case 14: {
-      return "\\(\\nu_{\\mu}\\)";
-    }
-    case 16: {
-      return "\\(\\nu_{\\tau}\\)";
-    }
+  case -12: {
+    return "\\(\\bar{\\nu_{e}}\\)";
+  }
+  case -14: {
+    return "\\(\\bar{\\nu_{\\mu}}\\)";
+  }
+  case -16: {
+    return "\\(\\bar{\\nu_{\\tau}}\\)";
+  }
+  case 12: {
+    return "\\(\\nu_{e}\\)";
+  }
+  case 14: {
+    return "\\(\\nu_{\\mu}\\)";
+  }
+  case 16: {
+    return "\\(\\nu_{\\tau}\\)";
+  }
   }
 }
 
 function GetParamLatexName(name) {
   if (name === "Dm2_Atm") {
     return '\\(\\Delta{}\\textrm{m}_{32}^{2}\\)';
-  } else if (name === "Dm2_21") {
+  } else if (name === "Dm2_Atm_pere3") {
+    return '\\(\\Delta{}\\textrm{m}_{32}^{2}/10^{-3}\\)';
+  } else if (name === "Dm2_Sol") {
     return '\\(\\Delta{}\\textrm{m}_{21}^{2}\\)';
+  } else if (name === "Dm2_Sol_pere5") {
+    return '\\(\\Delta{}\\textrm{m}_{21}^{2}/10^{-5}\\)';
   } else if (name === "Dm2_Sol") {
     return GetParamLatexName("Dm2_21");
   } else if (name === "S2Th12") {
@@ -173,20 +238,27 @@ function GetParamLatexName(name) {
     return '\\(\\sin^{2}(\\theta_{23})\\)';
   } else if (name === "dcp") {
     return '\\(\\delta_{\\rm {\\small cp}}\\)';
+  } else if (name === "dcp_perpi") {
+    return '\\(\\delta_{\\rm {\\small cp}}/\\pi\\)';
   }
+
   return false;
 }
-
 
 function GetOscToolTipHTML(pdg_from, pdg_to, baseline, params) {
   return `<div>From: ${GetNuLatexName(pdg_from)}</div>
           <div>To: ${GetNuLatexName(pdg_to)}</div>
           <div>Baseline: ${baseline} km</div>
-          <div>${GetParamLatexName("S2Th12")}: ${params.S2Th12.toPrecision(3)}</div>
-          <div>${GetParamLatexName("S2Th13")}: ${params.S2Th13.toExponential(3)}</div>
-          <div>${GetParamLatexName("S2Th23")}: ${params.S2Th23.toPrecision(3)}</div>
-          <div>${GetParamLatexName("Dm2_21")}: ${params.Dm2_21.toExponential(3)} eV</div>
-          <div>${GetParamLatexName("Dm2_Atm")}: ${params.Dm2_Atm.toExponential(3)} eV</div>
+          <div>${GetParamLatexName("S2Th12")}: ${
+      params.S2Th12.toPrecision(3)}</div>
+          <div>${GetParamLatexName("S2Th13")}: ${
+      params.S2Th13.toExponential(3)}</div>
+          <div>${GetParamLatexName("S2Th23")}: ${
+      params.S2Th23.toPrecision(3)}</div>
+          <div>${GetParamLatexName("Dm2_Sol")}: ${
+      params.Dm2_21.toExponential(3)} eV</div>
+          <div>${GetParamLatexName("Dm2_Atm")}: ${
+      params.Dm2_Atm.toExponential(3)} eV</div>
           <div>${GetParamLatexName("dcp")}: ${params.dcp.toPrecision(3)}</div>`;
 }
 
@@ -206,7 +278,7 @@ function OscillateHist1D(nu_pdg_from, nu_pdg_to, baseline_km, oscParams, hist) {
 
     for (let e_it = 0; e_it < 10; ++e_it) {
       prob_sum +=
-        osc_help.GetProb(bin_E_low + (e_it + 0.5) * E_step, nu_pdg_to);
+          osc_help.GetProb(bin_E_low + (e_it + 0.5) * E_step, nu_pdg_to);
     }
     prob_sum /= 10.0;
 

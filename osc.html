@@ -9,186 +9,23 @@
 
   <!-- Bootstrap -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-    crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-    crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-    crossorigin="anonymous"></script>
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
+  
 
-  <style type="text/css">
-    .x_axis {
-      font-size: 1em
-    }
-
-    .y_axis {
-      font-size: 1em
-    }
-
-    .biglabel {
-      font-size: 1.5em
-    }
-
-    .overlay {
-      fill: none;
-      pointer-events: all;
-    }
-
-    .grey_line {
-      stroke: gray;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .blue_line {
-      stroke: blue;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .red_line {
-      stroke: red;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .orange_line {
-      stroke: orange;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .osc_line {
-      stroke: blue;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .osc_next {
-      stroke: red;
-    }
-
-    .dashed_line {
-      stroke-dasharray: 5, 5;
-    }
-
-    .constraint_line {
-      stroke: blue;
-      stroke-width: 2;
-      fill: none;
-    }
-
-    .constraint_inner {
-      stroke-dasharray: 5, 5;
-    }
-
-    .constraint_outer {}
-
-    .T2KConstraint {
-      stroke: red;
-    }
-
-    .NOvAConstraint {
-      stroke: green;
-    }
-
-    .NuFIT4Constraint {
-      stroke: blue;
-    }
-
-    .KamLandConstraint {
-      stroke: purple;
-    }
-
-    .KamLandConstraint {
-      stroke: magenta;
-    }
-
-    .DBConstraint {
-      stroke: orange;
-    }
-
-    .ColorWheel1 {
-      stroke: #181994;
-    }
-
-    .ColorWheel2 {
-      stroke: #a51760;
-    }
-
-    .ColorWheel3 {
-      stroke: #b6b316;
-    }
-
-    .ColorWheel4 {
-      stroke: #14c76b;
-    }
-
-    .ColorWheel5 {
-      stroke: #ff8066;
-    }
-
-    circle.ColorWheel1 {
-      stroke: #181994;
-      fill: #181994;
-    }
-
-    circle.ColorWheel2 {
-      stroke: #a51760;
-      fill: #a51760;
-    }
-
-    circle.ColorWheel3 {
-      stroke: #b6b316;
-      fill: #b6b316;
-    }
-
-    circle.ColorWheel4 {
-      stroke: #14c76b;
-      fill: #14c76b;
-    }
-
-    circle.ColorWheel5 {
-      stroke: #ff8066;
-      fill: #ff8066;
-    }
-
-    div.tooltip {
-      position: absolute;
-      text-align: left;
-      width: 15em;
-      padding: 5px;
-      font: 12px sans-serif;
-      background: lightsteelblue;
-      border: 0px;
-      border-radius: 8px;
-      pointer-events: none;
-    }
-  </style>
+  <link rel="stylesheet" href="plot_styles.css" />
 
   <!-- d3.js -->
   <script src="https://d3js.org/d3.v5.min.js"></script>
 
-  <!-- LALOLib -->
-  <script src="http://mlweb.loria.fr/lalolib-noglpk-module.min.js"></script>
-
   <!-- Local code -->
   <script src="prob3/prob3.js"></script>
 
-  <script src="data/Constraint_Contours.js"></script>
-  <script src="data/DUNE_Fluxes.js"></script>
-
-  <script src="tools/hist.js"></script>
   <script src="tools/plot.js"></script>
 
   <script src="tools/OscUtils.js"></script>
-  <script src="tools/PRISMTools.js"></script>
 
   <script src="tools/OscConstraintWidget.js"></script>
+  <script src="tools/OscParamTableWidget.js"></script>
 
   <script src="OscProbPlot.js"></script>
   <script src="oscapp.js"></script>
@@ -222,21 +59,32 @@
 
 <body>
 
-  <div class="container" id="mathjax_onload_message">
-    <div class="row">
-      <div class="col-lg">
-        <h3>MathJax initializing...</h3>
-      </div>
-    </div>
-  </div>
+  <h3 class="font-weight-light text-center text-lg-left mt-4 mb-0" id="mathjax_onload_message" >MathJax initializing...</h3>
 
   <div class="container" id="app_content" style="display:none;">
 
-    <div class="row">
-      <div class="col-lg">
-        <h1>Oscillation Probability</h1>
-      </div>
+    <h1 class="font-weight-light text-center text-lg-left mt-4 mb-0">Oscillation Parameter Values</h1>
+    <hr class="mt-2 mb-5">
+
+    <h3 class="font-weight-light text-center text-lg-left mt-2 mb-1">Click to choose</h3>
+    <hr class="mt-1 mb-2">
+
+    <div class="row" id="ConstraintControls"></div>
+
+    <h5 class="font-weight-light text-center text-lg-left mt-2 mb-1">Click to modify/remove</h5>
+    <hr class="mt-1 mb-2">
+
+    <div class="row" >
+      <div class="col-12" id="OscParamTable" ></div>
     </div>
+
+    <div class="row mt-2 mb-2">
+        <button id="add_btn" type="button" class="btn btn-primary ml-3 mr-3">Add series</button>
+        <button id="clear_btn" type="button" class="btn btn-primary ml-3 mr-3">Clear all</button>
+    </div>
+
+    <hr class="mt-2 mb-5">
+
     <div class="row">
       <div class="col-2">
         <label for="neutrino_selector">Neutrino:</label>
@@ -261,61 +109,25 @@
     <div class="row">
       <div class="col-8">
         <div class="row">
-          <button id="prism_vis_btn" type="button" class="btn btn-primary">Hide PRISM</button>
+          <div id="OscProbPlot_mu" style=""></div>
         </div>
-        <div class="row" id="PRISMRow">
-          <div class="row">
-            <div id="PRISMItPlot"></div>
-          </div>
-          <div class="row">
-            <div id="CoeffPlot"></div>
-          </div>
-          <div class="row">
-            <div class="form-group">
-              <label for="emin_input">Minimum Energy (GeV)</label>
-              <input type="text" class="form-control" id="emin_input" value="0.5">
-            </div>
-            <div class="form-group">
-              <label for="emax_input">Maximum Energy (GeV)</label>
-              <input type="text" class="form-control" id="emax_input" value="3.5">
-            </div>
-            <div class="form-group">
-              <label for="regfac_input">Regularization strength</label>
-              <input type="text" class="form-control" id="regfac_input" value="5E-9">
-            </div>
-            <div class="form-group">
-              <label for="regfac_input">Maximum off-axis position (m)</label>
-              <input type="text" class="form-control" id="maxoffaxis_input" value="33">
-            </div>
-          </div>
-        </div>
-
-        <div class="row">
-          <button id="mu_vis_btn" type="button" class="btn btn-primary">Show muon disappearance probability</button>
-          <div id="OscProbPlot_mu" style="display:none;"></div>
-        </div>
-        <div class="row">
-          <button id="e_vis_btn" type="button" class="btn btn-primary">Show electron appearance probability</button>
-          <div id="OscProbPlot_e" style="display:none;"></div>
-        </div>
-        <div class="row">
-          <button id="tau_vis_btn" type="button" class="btn btn-primary">Show tau appearance probability</button>
-          <div id="OscProbPlot_tau" style="display:none;"></div>
-        </div>
-        <div class="row">
-          <button id="add_btn" type="button" class="btn btn-primary">Add</button>
-          <button id="clear_btn" type="button" class="btn btn-primary">Clear</button>
-        </div>
-      </div>
-      <div class="col-4">
-        <h5>Click/Drag to choose parameters</h5>
-        <div id="ConstraintControls"></div>
       </div>
     </div>
 
 
   </div>
   <!--end container -->
+
+  <!--Bootstrap scripts-->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
 </body>
 
 </html>

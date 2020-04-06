@@ -53,7 +53,7 @@ class OscProbConstraints {
       return true;
     } else if (axname === "S2Th13") {
       return true;
-    }else if (axname === "S2Th12") {
+    } else if (axname === "S2Th12") {
       return true;
     } else if (axname === "dcp") {
       return true;
@@ -88,15 +88,6 @@ class OscProbConstraints {
   }
 };
 
-class PlotPoint {
-  constructor(xax_namef, xax_pointf, yax_namef, yax_pointf) {
-    this.xax_name = xax_namef;
-    this.xax_point = xax_pointf;
-    this.yax_name = yax_namef;
-    this.yax_point = yax_pointf;
-  }
-};
-
 class ConstraintAxes {
   constructor(namef, titlef, minf, maxf, tickArgsf = [ 5 ], exp_scalef = 1,
               param_namef = undefined) {
@@ -119,43 +110,109 @@ class ConstraintWidget {
     this.ConstraintData = ConstraintDataf;
     this.xAxis = xAxisf;
     this.yAxis = yAxisf;
+
+    this.osc_param_list = [];
+    this.svg_points = [];
+    this.current_index = 0;
   };
 
-  AddNewOscParams(oscParams) {
-    if (this.no_set_point) {
-      return;
+  SetOscParams(i, oscParams) {
+
+    if (this.osc_param_list.length > i) {
+      this.ClearOscParam(i);
+      // this.current_index = i;
+    } else {
+      this.osc_param_list.length = (i + 1);
+      this.svg_points.length = (i + 1);
     }
 
-    let point_class = "";
-    if (oscParams.point_class != undefined) {
-      point_class = oscParams.point_class;
+    let x_scaled = oscParams.Get(this.xAxis.param_name) * this.xAxis.exp_scale;
+    let y_scaled = oscParams.Get(this.yAxis.param_name) * this.yAxis.exp_scale;
+
+    this.osc_param_list[i] = oscParams;
+
+    if ((x_scaled >= this.xAxis.min) && (x_scaled <= this.xAxis.max) &&
+        (y_scaled >= this.yAxis.min) && (y_scaled <= this.yAxis.max)) {
+      this.svg_points[i] = this.svg.append("circle")
+                               .attr("class", `cpoint ColorWheel-${i + 1}`)
+                               .attr("pointer-events", "none")
+                               .attr("cx", this.xScale(x_scaled))
+                               .attr("cy", this.yScale(y_scaled))
+                               .attr("r", 3)
+                               .attr("data-index", i);
+    } else {
+      this.svg_points[i] = undefined;
     }
-
-    if (this.last_OscParamPoint != undefined) {
-      this.last_OscParamPoint.remove();
-    }
-
-    let x = oscParams.Get(this.xAxis.param_name);
-    let y = oscParams.Get(this.yAxis.param_name);
-
-    this.last_OscParamPoint =
-        this.svg.append("circle")
-            .attr("class", `cpoint ${point_class}`)
-            .attr("pointer-events", "none")
-            .attr("cx", this.xScale(x * this.xAxis.exp_scale))
-            .attr("cy", this.yScale(y * this.yAxis.exp_scale))
-            .attr("r", 3);
   }
 
-  SetOscParams() { this.last_OscParamPoint = undefined; }
+  GetOscParams(i) {
+    if ((this.osc_param_list.length == 0) ||
+        (this.osc_param_list.length <= i)) {
+      this.osc_param_list.length = i + 1;
+      this.osc_param_list[i] = new OscParams();
+    }
 
-  ClearOscParams() { this.svg.selectAll(".cpoint").remove(); }
+    if (this.osc_param_list[i] === undefined) {
+      console.log(`WARN: Getting plot oscillation parameter from list (index: ${
+          i}), but it was never set.`);
+      this.osc_param_list[i] = new OscParams();
+    }
 
-  Initialize(ele, onchanged_callback, on_hover_callback, off_hover_callback) {
+    return this.osc_param_list[i];
+  }
+
+  GetAllSeries() {
+    let rtn = {};
+    for (var i = 0; i < this.osc_param_list.length; ++i) {
+      if (this.osc_param_list[i] !== undefined) {
+        rtn[i] = this.osc_param_list[i].Copy();
+      }
+    }
+    return rtn;
+  }
+
+  ClearOscParam(i) {
+    if ((this.svg_points.length > i) && (this.svg_points[i] !== undefined)) {
+      this.svg_points[i].remove();
+    }
+    this.osc_param_list[i] = undefined;
+    this.current_index = i;
+  }
+
+  ClearOscParams() {
+    this.svg.selectAll(".cpoint").remove();
+    this.svg_points = [];
+    this.osc_param_list = [];
+    this.current_index = 0;
+  }
+
+  IncrementIndex() {
+    for (var i = 0; i < this.osc_param_list.length; ++i) {
+      if (this.osc_param_list[i] === undefined) {
+        this.current_index = i;
+        return this.current_index;
+      }
+    }
+
+    // If we don't have a space
+    this.current_index = this.osc_param_list.length;
+    this.osc_param_list.length = this.osc_param_list.length + 1;
+    return this.current_index;
+  }
+
+  SetIndex(idx) {
+    if (this.osc_param_list.length <= idx) {
+      this.osc_param_list.length = (idx + 1);
+      this.svg_points.length = (idx + 1);
+    }
+    this.current_index = idx;
+  }
+
+  Initialize(ele, onchanged_callback) {
 
     let width = 200;
     let height = 150;
-    let margin = {top : 20, right : 20, bottom : 75, left : 90};
+    let margin = {top : 20, right : 20, bottom : 60, left : 90};
     let tot_width = width + margin.left + margin.right;
     let tot_height = height + margin.top + margin.bottom;
 
@@ -175,13 +232,18 @@ class ConstraintWidget {
             .y(function(d) { return yScale(d[1] * yAxis.exp_scale); });
     // .curve(d3.curveNatural);
 
-    this.svg = d3.select(ele)
-                   .append("svg")
+    let divele = d3.select(ele).append("div").classed(
+        "col-lg-4 col-md-6 col-auto mx-auto", true);
+
+    // everything is a child of the group that includes the offset
+    this.svg = divele.append("svg")
                    .attr("width", tot_width)
                    .attr("height", tot_height)
+                   .classed("border rounded", true)
                    .append("g")
                    .attr("transform",
                          "translate(" + margin.left + "," + margin.top + ")");
+
     // x axis object
     this.svg.append("g")
         .attr("class", "x_axis")
@@ -204,30 +266,22 @@ class ConstraintWidget {
     let xAxis_name = this.xAxis.param_name;
     let yAxis_name = this.yAxis.param_name;
 
+    let plot = this;
+
     function clickHandler(owner) {
       // Get x/y in axes coords
       let coords = d3.mouse(owner);
       let xaxcoords = xScale.invert(coords[0]) / xAxis.exp_scale;
       let yaxcoords = yScale.invert(coords[1]) / yAxis.exp_scale;
 
-      let params = new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
+      let oscpars = plot.GetOscParams(plot.current_index);
+      oscpars = oscpars.Copy();
 
-      onchanged_callback(params);
+      oscpars.Set(xAxis_name, xaxcoords);
+      oscpars.Set(yAxis_name, yaxcoords);
+
+      onchanged_callback(plot.current_index, oscpars);
     };
-
-    function hoverHandler() {
-      // Get x/y in axes coords
-      let coords = d3.mouse(this);
-      let xaxcoords = xScale.invert(coords[0]) / xAxis.exp_scale;
-      let yaxcoords = yScale.invert(coords[1]) / yAxis.exp_scale;
-
-      let params = new PlotPoint(xAxis_name, xaxcoords, yAxis_name, yaxcoords);
-
-      on_hover_callback(params);
-    };
-
-    let plot = this;
-    this.no_set_point = false;
 
     MathJax.Hub.Queue([ function() {
       let rect = plot.svg.append("rect")
@@ -235,46 +289,38 @@ class ConstraintWidget {
                      .attr("width", width)
                      .attr("height", height);
 
-      function mouseDownHandler() {
-        plot.no_set_point = true;
-        rect.on("mousemove", hoverHandler);
-      };
+      function mouseUpHandler() { clickHandler(this); };
 
-      function mouseUpHandler() {
-        plot.no_set_point = false;
-        clickHandler(this);
-        rect.on("mousemove", null);
-        off_hover_callback();
-      };
-
-      rect.on("mousedown", mouseDownHandler).on("mouseup", mouseUpHandler);
+      rect.on("mouseup", mouseUpHandler);
 
       let tooltip = d3.select("body")
                         .append("div")
                         .attr("class", "tooltip")
                         .style("opacity", 0);
 
-      for (let ci = 0; ci < plot.ConstraintData.length; ++ci) {
-        for (let pi = 0; pi < plot.ConstraintData[ci].data.length; ++pi) {
-          let tool_tip_html = plot.ConstraintData[ci].meta.tool_tip_html;
-          let path =
-              plot.svg.append("path")
-                  .attr("d",
+      if (plot.ConstraintData !== undefined) {
+        for (let ci = 0; ci < plot.ConstraintData.length; ++ci) {
+          for (let pi = 0; pi < plot.ConstraintData[ci].data.length; ++pi) {
+            let tool_tip_html = plot.ConstraintData[ci].meta.tool_tip_html;
+            let path =
+                plot.svg.append("path")
+                    .attr(
+                        "d",
                         plot.lineGen(
                             plot.ConstraintData[ci].data[pi])) // 11. Calls the
-                  // line generator
-                  .attr("class", plot.ConstraintData[ci].meta.lineclass)
-                  .on("mousedown", mouseDownHandler)
-                  .on("mouseup", mouseUpHandler);
-          if (tool_tip_html != undefined) {
-            path.on("mouseover", function() {
-                  tooltip.transition().duration(200).style("opacity", .9);
-                  tooltip.style("left", (d3.event.pageX) + "px")
-                      .style("top", (d3.event.pageY - 28) + "px")
-                      .html(tool_tip_html);
-                }).on("mouseout", function() {
-              tooltip.transition().duration(500).style("opacity", 0);
-            });
+                    // line generator
+                    .attr("class", plot.ConstraintData[ci].meta.lineclass)
+                    .on("mouseup", mouseUpHandler);
+            if (tool_tip_html != undefined) {
+              path.on("mouseover", function() {
+                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.style("left", (d3.event.pageX) + "px")
+                        .style("top", (d3.event.pageY - 28) + "px")
+                        .html(tool_tip_html);
+                  }).on("mouseout", function() {
+                tooltip.transition().duration(500).style("opacity", 0);
+              });
+            }
           }
         }
       }
@@ -285,6 +331,14 @@ class ConstraintWidget {
 };
 
 function GetConstraintData() {
+
+  var xobj = new XMLHttpRequest();
+  xobj.overrideMimeType("application/json");
+  xobj.open('GET', 'data/osc_constraint_contours.js', false);
+  xobj.send(null);
+
+  let OscProbConstraintData = JSON.parse(xobj.responseText);
+
   let ConstraintData = new OscProbConstraints();
   ConstraintData.AddConstraint(
       "T2K2018_68", "S2Th23", "Dm2_Atm",
@@ -422,7 +476,6 @@ function GetConstraintData() {
           OscProbConstraintData.SolarGlobal.Year}</div><div>Ref: ${
           OscProbConstraintData.SolarGlobal.Ref}</div>`);
 
-
   ConstraintData.AddConstraint(
       "DB2018_68", "S2Th13", "dcp",
       OscProbConstraintData.DayaBay2016.S2Th13_dcp["one_sigma"].S2Th13,
@@ -437,17 +490,20 @@ function GetConstraintData() {
 
 var constraint_plots = [];
 
-function InitializeConstraintWidgets(el, onchanged_callback, on_hover_callback,
-                                     off_hover_callback) {
+function InitializeConstraintWidgets(el, onchanged_callback) {
 
   let constraint_data = GetConstraintData();
 
-  let ax_Dm2_Atm = new ConstraintAxes(
+  let ax_Dm2_Atm_NH = new ConstraintAxes(
       "Dm2_Atm", "\\(\\Delta{}\\textrm{m}_{32}^{2} 10^{-3} eV\\)", 2.2E-3,
       2.7E-3, [ 3 ], 1E3);
 
+  let ax_Dm2_Atm_IH = new ConstraintAxes(
+      "Dm2_Atm", "\\(\\Delta{}\\textrm{m}_{32}^{2} 10^{-3} eV\\)", -2.7E-3,
+      -2.2E-3, [ 3 ], 1E3);
+
   let ax_S2Th23 = new ConstraintAxes("S2Th23", GetParamLatexName("S2Th23"),
-                                     0.375, 0.625, [ 2 ]);
+                                     0.375, 0.65, [ 2 ]);
 
   let ax_dcp_mpi_pi =
       new ConstraintAxes("dcp", "\\(\\delta_{\\rm {\\small cp}} /\\pi\\)",
@@ -468,7 +524,9 @@ function InitializeConstraintWidgets(el, onchanged_callback, on_hover_callback,
                                      0.4, [ 2 ]);
 
   constraint_plots.push(new ConstraintWidget(constraint_data["S2Th23_Dm2_Atm"],
-                                             ax_S2Th23, ax_Dm2_Atm));
+                                             ax_S2Th23, ax_Dm2_Atm_NH));
+  constraint_plots.push(new ConstraintWidget(constraint_data["S2Th23_Dm2_Atm"],
+                                             ax_S2Th23, ax_Dm2_Atm_IH));
   constraint_plots.push(new ConstraintWidget(constraint_data["S2Th13_dcp"],
                                              ax_S2Th13, ax_dcp_mpi_pi));
   constraint_plots.push(new ConstraintWidget(constraint_data["dcp_S2Th23"],
@@ -477,12 +535,8 @@ function InitializeConstraintWidgets(el, onchanged_callback, on_hover_callback,
                                              ax_S2Th12, ax_Dm2_Sol));
 
   for (let plot_i = 0; plot_i < constraint_plots.length; ++plot_i) {
-    constraint_plots[plot_i].Initialize(el, function(pp) {
-      let op = onchanged_callback(pp);
-      for (let plot_j = 0; plot_j < constraint_plots.length; ++plot_j) {
-        constraint_plots[plot_j].AddNewOscParams(op);
-      }
-    }, on_hover_callback, off_hover_callback);
+    constraint_plots[plot_i].Initialize(
+        el, function(idx, pp) { onchanged_callback(idx, pp); });
   }
 }
 
@@ -492,14 +546,30 @@ function ClearConstrainWidgetPoints() {
   }
 }
 
-function SetConstrainWidgetPoints() {
+function ClearConstrainWidgetPoint(idx) {
   for (let plot_j = 0; plot_j < constraint_plots.length; ++plot_j) {
-    constraint_plots[plot_j].SetOscParams();
+    constraint_plots[plot_j].ClearOscParam(idx);
   }
 }
 
-function AddNewConstrainWidgetPoints(params) {
+function SetConstraintWidgetPoints(index, osc_params) {
   for (let plot_j = 0; plot_j < constraint_plots.length; ++plot_j) {
-    constraint_plots[plot_j].SetOscParams();
+    constraint_plots[plot_j].SetOscParams(index, osc_params);
   }
 }
+
+function ConstraintWidgetSetIndex(index) {
+  for (let plot_j = 0; plot_j < constraint_plots.length; ++plot_j) {
+    constraint_plots[plot_j].SetIndex(index);
+  }
+}
+
+function IncrementConstrainWidgetNPoints() {
+  let NI = 0;
+  for (let plot_j = 0; plot_j < constraint_plots.length; ++plot_j) {
+    NI = constraint_plots[plot_j].IncrementIndex();
+  }
+  return NI;
+}
+
+function GetAllChosenParameters() { return constraint_plots[0].GetAllSeries(); }

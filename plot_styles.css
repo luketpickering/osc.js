@@ -1,0 +1,156 @@
+.x_axis {
+  font-size: 1em
+}
+
+.y_axis {
+  font-size: 1em
+}
+
+.biglabel {
+  font-size: 1.5em
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.grey_line {
+  stroke: gray;
+  stroke-width: 2;
+  fill: none;
+}
+
+.blue_line {
+  stroke: blue;
+  stroke-width: 2;
+  fill: none;
+}
+
+.red_line {
+  stroke: red;
+  stroke-width: 2;
+  fill: none;
+}
+
+.orange_line {
+  stroke: orange;
+  stroke-width: 2;
+  fill: none;
+}
+
+.osc_line {
+  stroke: blue;
+  stroke-width: 2;
+  fill: none;
+}
+
+.osc_next {
+  stroke: red;
+}
+
+.dashed_line {
+  stroke-dasharray: 5, 5;
+}
+
+.constraint_line {
+  stroke: blue;
+  stroke-width: 2;
+  fill: none;
+}
+
+.constraint_inner {
+  stroke-dasharray: 5, 5;
+}
+
+.constraint_outer {}
+
+.T2KConstraint {
+  stroke: red;
+}
+
+.NOvAConstraint {
+  stroke: green;
+}
+
+.NuFIT4Constraint {
+  stroke: blue;
+}
+
+.KamLandConstraint {
+  stroke: purple;
+}
+
+.KamLandConstraint {
+  stroke: magenta;
+}
+
+.DBConstraint {
+  stroke: orange;
+}
+
+.ColorWheel-1 {
+  stroke: #181994;
+  color: #181994;
+}
+
+.ColorWheel-2 {
+  stroke: #a51760;
+  color: #a51760;
+}
+
+.ColorWheel-3 {
+  stroke: #b6b316;
+  color: #b6b316;
+}
+
+.ColorWheel-4 {
+  stroke: #14c76b;
+  color: #14c76b;
+}
+
+.ColorWheel-5 {
+  stroke: #ff8066;
+  color: #ff8066;
+}
+
+circle.ColorWheel-1 {
+  stroke: #181994;
+  fill: #181994;
+}
+
+circle.ColorWheel-2 {
+  stroke: #a51760;
+  fill: #a51760;
+}
+
+circle.ColorWheel-3 {
+  stroke: #b6b316;
+  fill: #b6b316;
+}
+
+circle.ColorWheel-4 {
+  stroke: #14c76b;
+  fill: #14c76b;
+}
+
+circle.ColorWheel-5 {
+  stroke: #ff8066;
+  fill: #ff8066;
+}
+
+div.tooltip {
+  position: absolute;
+  text-align: left;
+  width: 15em;
+  padding: 5px;
+  font: 12px sans-serif;
+  background: lightsteelblue;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+td.oscpar {
+  vertical-align: middle;
+}

@@ -482,7 +482,7 @@ class mosc {
   /***********************************************************************
   trans2p
 
-  Convert a transition matirx A to transition probabilities
+  Convert a transition matrix A to transition probabilities
 ***********************************************************************/
   trans2p(A, P) {
     for (let i = 0; i < 3; i++) {
