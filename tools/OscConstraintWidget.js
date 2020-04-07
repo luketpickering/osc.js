@@ -1,93 +1,5 @@
 "use strict";
 
-class OPContour {
-  constructor(namef, xpointsf, ypointsf, lineclassf, tool_tip_htmlf) {
-    this.name = namef;
-    this.x = xpointsf;
-    this.y = ypointsf;
-    this.lineclass = lineclassf;
-    this.tool_tip_html = tool_tip_htmlf;
-  }
-
-  GetPointList() {
-    let data = [];
-    for (let sit = 0; sit < this.x.length; sit++) {
-      data[sit] = [];
-      for (let dit = 0; dit < this.x[sit].length; dit++) {
-        data[sit].push([ this.x[sit][dit], this.y[sit][dit] ]);
-      }
-    }
-    return data;
-  }
-};
-
-class OscProbConstraints {
-  constructor() { this.Constraints = {}; }
-
-  AddConstraint(namef, xaxf, yaxf, xpointsf, ypointsf,
-                lineclass = "constraint_line", tool_tip_html = undefined) {
-    if (!OscProbConstraints.IsValidAxis(xaxf)) {
-      console.log(`Failed to add constraint with invalid axis name: ${xaxf}`);
-      return;
-    }
-    if (!(xaxf in this.Constraints)) {
-      this.Constraints[xaxf] = {};
-    }
-    if (!OscProbConstraints.IsValidAxis(yaxf)) {
-      console.log(`Failed to add constraint with invalid axis name: ${yaxf}`);
-      return;
-    }
-    if (!(yaxf in this.Constraints[xaxf])) {
-      this.Constraints[xaxf][yaxf] = [];
-    }
-    this.Constraints[xaxf][yaxf].push(
-        new OPContour(namef, xpointsf, ypointsf, lineclass, tool_tip_html));
-  }
-
-  static IsValidAxis(axname) {
-    if (axname === "Dm2_Atm") {
-      return true;
-    } else if (axname === "Dm2_Sol") {
-      return true;
-    } else if (axname === "S2Th23") {
-      return true;
-    } else if (axname === "S2Th13") {
-      return true;
-    } else if (axname === "S2Th12") {
-      return true;
-    } else if (axname === "dcp") {
-      return true;
-    }
-    return false;
-  }
-
-  GetConstraintData() {
-    let data = {};
-    Object.keys(this.Constraints).forEach(function(key_x) {
-      Object.keys(this.Constraints[key_x]).forEach(function(key_y) {
-        let constraints = this.Constraints[key_x][key_y];
-        let plotn = [ key_x + "_" + key_y ].join("");
-        if (!(plotn in data)) {
-          data[plotn] = [];
-        }
-
-        for (let cit = 0; cit < constraints.length; ++cit) {
-          data[plotn].push({
-            meta : {
-              id : cit,
-              name : constraints[cit].name,
-              tool_tip_html : constraints[cit].tool_tip_html,
-              lineclass : constraints[cit].lineclass
-            },
-            data : constraints[cit].GetPointList()
-          });
-        }
-      }, this);
-    }, this);
-    return data;
-  }
-};
-
 class ConstraintAxes {
   constructor(namef, titlef, minf, maxf, tickArgsf = [ 5 ], exp_scalef = 1,
               param_namef = undefined) {
@@ -102,18 +14,24 @@ class ConstraintAxes {
       this.param_name = this.name;
     }
   }
+  GetParameterRange() {
+    let range = [ this.min / this.exp_scale, this.max / this.exp_scale ];
+    return range;
+  }
+  GetScaledRange() { return [ this.min, this.max ]; }
 };
 
 class ConstraintWidget {
 
-  constructor(ConstraintDataf, xAxisf, yAxisf) {
-    this.ConstraintData = ConstraintDataf;
+  constructor(xAxisf, yAxisf) {
     this.xAxis = xAxisf;
     this.yAxis = yAxisf;
 
     this.osc_param_list = [];
     this.svg_points = [];
     this.current_index = 0;
+
+    this.constraint_series = {};
   };
 
   SetOscParams(i, oscParams) {
@@ -131,10 +49,15 @@ class ConstraintWidget {
 
     this.osc_param_list[i] = oscParams;
 
+    let hie_class = "normal_hierarchy";
+    if(oscParams.Get("Dm2_Atm") < 0){
+      hie_class = "inverted_hierachy";
+    }
+
     if ((x_scaled >= this.xAxis.min) && (x_scaled <= this.xAxis.max) &&
         (y_scaled >= this.yAxis.min) && (y_scaled <= this.yAxis.max)) {
-      this.svg_points[i] = this.svg.append("circle")
-                               .attr("class", `cpoint ColorWheel-${i + 1}`)
+      this.svg_points[i] = this.plot_area_svg.append("circle")
+                               .attr("class", `cpoint ColorWheel-${i + 1} ${hie_class}`)
                                .attr("pointer-events", "none")
                                .attr("cx", this.xScale(x_scaled))
                                .attr("cy", this.yScale(y_scaled))
@@ -180,7 +103,7 @@ class ConstraintWidget {
   }
 
   ClearOscParams() {
-    this.svg.selectAll(".cpoint").remove();
+    this.plot_area_svg.selectAll(".cpoint").remove();
     this.svg_points = [];
     this.osc_param_list = [];
     this.current_index = 0;
@@ -208,28 +131,98 @@ class ConstraintWidget {
     this.current_index = idx;
   }
 
+  AddConstraint(constraint_data) {
+
+    let plot = this;
+    let tt_paths = [];
+
+    for (let pi = 0; pi < constraint_data.data.length; ++pi) {
+      let path =
+          this.plot_area_svg.append("path")
+              .attr("d",
+                    this.lineGen(constraint_data.data[pi])) // 11. Calls the
+              // line generator
+              .classed(constraint_data.meta.lineclass, true);
+
+      path.on("mouseup", function() { plot.HandleClick(this); });
+
+      if (constraint_data.meta.tool_tip_html != undefined) {
+        let tooltip = d3.select("body")
+                          .append("div")
+                          .attr("class", "tooltip")
+                          .style("opacity", 0)
+                          .html(constraint_data.meta.tool_tip_html);
+        tt_paths.push([ path, tooltip ]);
+      }
+    }
+
+    if (this.constraint_series[constraint_data.meta.expt] === undefined) {
+
+      let legendlen = 0;
+      let nseries = 0;
+      for (let [k, obj] of Object.entries(this.constraint_series)) {
+        legendlen += Math.round(obj.node().getBoundingClientRect().width) + 1;
+        nseries++;
+      }
+
+      let xoffset = 30 + (nseries * 10) + legendlen;
+      let yoffset = 15;
+
+      this.constraint_series[constraint_data.meta.expt] =
+          this.svg.append("g").attr("transform",
+                                    `translate(${xoffset}, ${yoffset})`);
+
+      this.constraint_series[constraint_data.meta.expt]
+          .append("line")
+          .attr("x1", 0)
+          .attr("x2", 20)
+          .attr("y1", 5)
+          .attr("y2", 5)
+          .classed(constraint_data.meta.lineclass, true);
+      this.constraint_series[constraint_data.meta.expt]
+          .append("a").attr("target","_blank")
+          .attr("href", constraint_data.meta.doi)
+          .append("text")
+          .attr("x", 22)
+          .attr("y", 10).classed("legend",true)
+          .text(constraint_data.meta.expt);
+    }
+
+    MathJax.Hub.Queue([ () => {
+      for (let pi = 0; pi < tt_paths.length; ++pi) {
+        let path = tt_paths[pi][0];
+        let tooltip = tt_paths[pi][1];
+
+        path.on("mouseover", function() {
+              tooltip.transition().duration(200).style("opacity", .9);
+              tooltip.style("left", (d3.event.pageX) + "px")
+                  .style("top", (d3.event.pageY - 28) + "px");
+            }).on("mouseout", function() {
+          tooltip.transition().duration(500).style("opacity", 0);
+        });
+      }
+    } ]);
+  }
+
   Initialize(ele, onchanged_callback) {
 
     let width = 200;
     let height = 150;
-    let margin = {top : 20, right : 20, bottom : 60, left : 90};
+    let margin = {top : 40, right : 20, bottom : 60, left : 90};
     let tot_width = width + margin.left + margin.right;
     let tot_height = height + margin.top + margin.bottom;
 
     this.xScale = d3.scaleLinear()
                       .domain([ this.xAxis.min, this.xAxis.max ]) // input
                       .range([ 0, width ]);                       // output
-    let xScale = this.xScale;
-    let xAxis = this.xAxis;
     this.yScale = d3.scaleLinear()
                       .domain([ this.yAxis.min, this.yAxis.max ]) // input
                       .range([ height, 0 ]);                      // output
-    let yScale = this.yScale;
-    let yAxis = this.yAxis;
+
     this.lineGen =
         d3.line()
-            .x(function(d) { return xScale(d[0] * xAxis.exp_scale); })
-            .y(function(d) { return yScale(d[1] * yAxis.exp_scale); });
+            .x((d) => { return this.xScale(d[0] * this.xAxis.exp_scale); })
+            .y((d) => { return this.yScale(d[1] * this.yAxis.exp_scale); });
     // .curve(d3.curveNatural);
 
     let divele = d3.select(ele).append("div").classed(
@@ -239,260 +232,198 @@ class ConstraintWidget {
     this.svg = divele.append("svg")
                    .attr("width", tot_width)
                    .attr("height", tot_height)
-                   .classed("border rounded", true)
-                   .append("g")
-                   .attr("transform",
-                         "translate(" + margin.left + "," + margin.top + ")");
+                   .classed("border rounded", true);
+
+    this.plot_area_svg = this.svg.append("g").attr(
+        "transform", "translate(" + margin.left + "," + margin.top + ")");
 
     // x axis object
-    this.svg.append("g")
+    this.plot_area_svg.append("g")
         .attr("class", "x_axis")
         .attr("transform", "translate(0," + height + ")")
         .call(d3.axisBottom(this.xScale).tickArguments(this.xAxis.tickArgs));
 
     // x axis title
-    RenderLatexLabel(this.svg.append("text").text(this.xAxis.title), this.svg,
-                     "25ex", "10ex", width * 0.6, height * 1.2, 1, 1);
+    RenderLatexLabel(this.plot_area_svg.append("text").text(this.xAxis.title),
+                     this.plot_area_svg, "25ex", "10ex", width * 0.6,
+                     height * 1.2, 1, 1);
 
     // y axis object
-    this.svg.append("g")
+    this.plot_area_svg.append("g")
         .attr("class", "y_axis")
         .call(d3.axisLeft(this.yScale).tickArguments(this.yAxis.tickArgs));
 
     // y axis title
-    RenderLatexLabel(this.svg.append("text").text(this.yAxis.title), this.svg,
-                     "25ex", "10ex", -120, -80, 1, 1, -90);
-
-    let xAxis_name = this.xAxis.param_name;
-    let yAxis_name = this.yAxis.param_name;
+    RenderLatexLabel(this.plot_area_svg.append("text").text(this.yAxis.title),
+                     this.plot_area_svg, "25ex", "10ex", -120, -80, 1, 1, -90);
 
     let plot = this;
 
-    function clickHandler(owner) {
-      // Get x/y in axes coords
-      let coords = d3.mouse(owner);
-      let xaxcoords = xScale.invert(coords[0]) / xAxis.exp_scale;
-      let yaxcoords = yScale.invert(coords[1]) / yAxis.exp_scale;
+    this.plot_area_svg.append("rect")
+        .attr("class", "overlay")
+        .attr("width", width)
+        .attr("height", height)
+        .on("mouseup", function() { plot.HandleClick(this); });
 
-      let oscpars = plot.GetOscParams(plot.current_index);
-      oscpars = oscpars.Copy();
-
-      oscpars.Set(xAxis_name, xaxcoords);
-      oscpars.Set(yAxis_name, yaxcoords);
-
-      onchanged_callback(plot.current_index, oscpars);
-    };
-
-    MathJax.Hub.Queue([ function() {
-      let rect = plot.svg.append("rect")
-                     .attr("class", "overlay")
-                     .attr("width", width)
-                     .attr("height", height);
-
-      function mouseUpHandler() { clickHandler(this); };
-
-      rect.on("mouseup", mouseUpHandler);
-
-      let tooltip = d3.select("body")
-                        .append("div")
-                        .attr("class", "tooltip")
-                        .style("opacity", 0);
-
-      if (plot.ConstraintData !== undefined) {
-        for (let ci = 0; ci < plot.ConstraintData.length; ++ci) {
-          for (let pi = 0; pi < plot.ConstraintData[ci].data.length; ++pi) {
-            let tool_tip_html = plot.ConstraintData[ci].meta.tool_tip_html;
-            let path =
-                plot.svg.append("path")
-                    .attr(
-                        "d",
-                        plot.lineGen(
-                            plot.ConstraintData[ci].data[pi])) // 11. Calls the
-                    // line generator
-                    .attr("class", plot.ConstraintData[ci].meta.lineclass)
-                    .on("mouseup", mouseUpHandler);
-            if (tool_tip_html != undefined) {
-              path.on("mouseover", function() {
-                    tooltip.transition().duration(200).style("opacity", .9);
-                    tooltip.style("left", (d3.event.pageX) + "px")
-                        .style("top", (d3.event.pageY - 28) + "px")
-                        .html(tool_tip_html);
-                  }).on("mouseout", function() {
-                tooltip.transition().duration(500).style("opacity", 0);
-              });
-            }
-          }
-        }
-      }
-    } ]);
+    this.onchanged_callback = onchanged_callback;
   };
 
-  // Callback for setting new values
+  HandleClick(click_target) {
+    // Get x/y in axes coords
+    let coords = d3.mouse(click_target);
+    let xaxcoords = this.xScale.invert(coords[0]) / this.xAxis.exp_scale;
+    let yaxcoords = this.yScale.invert(coords[1]) / this.yAxis.exp_scale;
+
+    let oscpars = this.GetOscParams(this.current_index).Copy();
+
+    oscpars.Set(this.xAxis.name, xaxcoords);
+    oscpars.Set(this.yAxis.name, yaxcoords);
+
+    this.onchanged_callback(this.current_index, oscpars);
+  };
 };
 
 function GetConstraintData() {
 
   var xobj = new XMLHttpRequest();
   xobj.overrideMimeType("application/json");
-  xobj.open('GET', 'data/osc_constraint_contours.js', false);
+  // get around caching
+  xobj.open('GET', `data/osc_constraint_contours.js? ${(new Date()).getTime()}`,
+            true);
+  xobj.onerror = function() {
+    console.log(
+        `ERROR: When attempting to read data/osc_constraint_contours.js, got ${
+            this.statusText}`);
+  };
+  xobj.onload = () => {
+    let OscProbConstraintData = JSON.parse(xobj.responseText);
+
+    for (let [pub, constraint] of Object.entries(
+             JSON.parse(xobj.responseText))) {
+      if ((constraint.Contours === undefined) ||
+          (constraint.Contours.length === 0)) {
+        continue;
+      }
+
+      for (let c_it = 0; c_it < constraint.Contours.length; ++c_it) {
+        let cname = constraint.Contours[c_it];
+        let contour = constraint[cname];
+
+        let naxes = contour.Axes.length;
+
+        let axis_a = contour.Axes[0];
+        if (!IsValidOscParamName(axis_a)) {
+          console.log(
+              `WARN: ${axis_a} is not a valid oscillation parameter name.`);
+          continue;
+        }
+        let axis_b = contour.Axes[1];
+        if (!IsValidOscParamName(axis_b)) {
+          console.log(
+              `WARN: ${axis_b} is not a valid oscillation parameter name.`);
+          continue;
+        }
+
+        // console.log(`Expt: ${constraint.Expt}, Constraint ${cname} X: ${
+        //     axis_a} Y: ${axis_b}`);
+
+        for (let plot_j = 0; plot_j < constraint_plots.length; ++plot_j) {
+          let axis_plot_x = constraint_plots[plot_j].xAxis.name;
+          let axis_plot_y = constraint_plots[plot_j].yAxis.name;
+
+          // console.log(`-- Plot ${plot_j} X: ${axis_plot_x} Y:
+          // ${axis_plot_y}`);
+
+          let contour_xparam = undefined;
+          let contour_yparam = undefined;
+          let plot_xrange = constraint_plots[plot_j].xAxis.GetParameterRange();
+          let plot_yrange = constraint_plots[plot_j].yAxis.GetParameterRange();
+
+          if ((axis_a === axis_plot_x) && (axis_b === axis_plot_y)) {
+            contour_xparam = contour.Axes[0];
+            contour_yparam = contour.Axes[1];
+          } else if ((axis_a === axis_plot_y) && (axis_b === axis_plot_x)) {
+            contour_xparam = contour.Axes[1];
+            contour_yparam = contour.Axes[0];
+          } else { // Not relevant for this plot, try the next one
+            continue;
+          }
+
+          // console.log(`-- -- drawing series for X: ${contour_xparam} Y: ${
+          //     contour_yparam}`);
+
+          for (let s_it = 0; s_it < contour.Series.length; ++s_it) {
+            let sname = contour.Series[s_it];
+            let series = contour[sname];
+
+            if (series[contour_xparam].length !=
+                series[contour_yparam].length) {
+              console.log(`WARN: (Expt: ${constraint.Expt}, Constraint ${
+                  cname}) xparam(${contour_xparam}) series(${sname}) has ${
+                  series[contour_xparam].length} subseries, and yparam(${
+                  contour_yparam}) has ${series[contour_yparam].length}.`);
+              continue;
+            }
+
+            let path_data = [];
+            let npoints = 0;
+            let npoints_sel = 0;
+            for (let ss_it = 0; ss_it < series[contour_xparam].length;
+                 ++ss_it) {
+
+              let xsubseries = series[contour_xparam][ss_it];
+              let ysubseries = series[contour_yparam][ss_it];
+              if (xsubseries.length != ysubseries.length) {
+                console.log(`WARN: (Expt: ${constraint.Expt}, Constraint ${
+                    cname}, sub-series: ${ss_it}) xparam(${
+                    contour_xparam}) series(${sname}) has ${
+                    xsubseries.length} path points, and yparam(${
+                    contour_yparam}) has ${ysubseries.length}.`);
+                continue;
+              }
+              let subpath = [];
+              for (let p_it = 0; p_it < xsubseries.length; ++p_it) {
+                npoints++;
+                if ((xsubseries[p_it] < plot_xrange[0]) ||
+                    (xsubseries[p_it] > plot_xrange[1]) ||
+                    (ysubseries[p_it] < plot_yrange[0]) ||
+                    (ysubseries[p_it] >
+                     plot_yrange[1])) { // Don't include OOR points
+                  continue;
+                }
+                npoints_sel++;
+                subpath.push([ xsubseries[p_it], ysubseries[p_it] ]);
+              }
+              if (subpath.length > 0) {
+                path_data.push(subpath);
+              }
+            }
+            // console.log(`-- -- Using ${npoints_sel}/${npoints}`);
+            if (path_data.length > 0) {
+              constraint_plots[plot_j].AddConstraint({
+                meta : {
+                  tool_tip_html : `<div>Expt: ${
+                      constraint.Expt}</div><div>Year: ${
+                      constraint.Year}</div><div>Ref: ${constraint.Ref}</div>`,
+                  lineclass : `${pub}_${contour.Series[s_it]} constraint_line`,
+                  expt : constraint.Expt,
+                  doi : constraint.doi
+                },
+                data : path_data
+              });
+            }
+          }
+        }
+      }
+    }
+  };
+
   xobj.send(null);
-
-  let OscProbConstraintData = JSON.parse(xobj.responseText);
-
-  let ConstraintData = new OscProbConstraints();
-  ConstraintData.AddConstraint(
-      "T2K2018_68", "S2Th23", "Dm2_Atm",
-      OscProbConstraintData.T2K2018.S2Th23_Dm2_Atm[68].S2Th23,
-      OscProbConstraintData.T2K2018.S2Th23_Dm2_Atm[68].Dm2_Atm,
-      "constraint_line constraint_inner T2KConstraint",
-      `<div>Expt: ${OscProbConstraintData.T2K2018.Expt}</div><div>Year: ${
-          OscProbConstraintData.T2K2018.Year}</div><div>Ref: ${
-          OscProbConstraintData.T2K2018.Ref}</div>`);
-  ConstraintData.AddConstraint(
-      "T2K2018_90", "S2Th23", "Dm2_Atm",
-      OscProbConstraintData.T2K2018.S2Th23_Dm2_Atm[90].S2Th23,
-      OscProbConstraintData.T2K2018.S2Th23_Dm2_Atm[90].Dm2_Atm,
-      "constraint_line constraint_outer T2KConstraint",
-      `<div>Expt: ${OscProbConstraintData.T2K2018.Expt}</div><div>Year: ${
-          OscProbConstraintData.T2K2018.Year}</div><div>Ref: ${
-          OscProbConstraintData.T2K2018.Ref}</div>`);
-
-  ConstraintData.AddConstraint(
-      "T2K2018_68", "S2Th13", "dcp",
-      OscProbConstraintData.T2K2018.S2Th13_dcp[68].S2Th13,
-      OscProbConstraintData.T2K2018.S2Th13_dcp[68].dcp,
-      "constraint_line constraint_inner T2KConstraint",
-      `<div>Expt: ${OscProbConstraintData.T2K2018.Expt}</div><div>Year: ${
-          OscProbConstraintData.T2K2018.Year}</div><div>Ref: ${
-          OscProbConstraintData.T2K2018.Ref}</div>`);
-  ConstraintData.AddConstraint(
-      "T2K2018_90", "S2Th13", "dcp",
-      OscProbConstraintData.T2K2018.S2Th13_dcp[90].S2Th13,
-      OscProbConstraintData.T2K2018.S2Th13_dcp[90].dcp,
-      "constraint_line constraint_outer T2KConstraint",
-      `<div>Expt: ${OscProbConstraintData.T2K2018.Expt}</div><div>Year: ${
-          OscProbConstraintData.T2K2018.Year}</div><div>Ref: ${
-          OscProbConstraintData.T2K2018.Ref}</div>`);
-
-  ConstraintData.AddConstraint(
-      "NOvA2018_68", "S2Th23", "Dm2_Atm",
-      OscProbConstraintData.NOvA2018.S2Th23_Dm2_Atm[68].S2Th23,
-      OscProbConstraintData.NOvA2018.S2Th23_Dm2_Atm[68].Dm2_Atm,
-      "constraint_line constraint_inner NOvAConstraint",
-      `<div>Expt: ${OscProbConstraintData.NOvA2018.Expt}</div><div>Year: ${
-          OscProbConstraintData.NOvA2018.Year}</div><div>Ref: ${
-          OscProbConstraintData.NOvA2018.Ref}</div>`);
-  ConstraintData.AddConstraint(
-      "NOvA2018_90", "S2Th23", "Dm2_Atm",
-      OscProbConstraintData.NOvA2018.S2Th23_Dm2_Atm[90].S2Th23,
-      OscProbConstraintData.NOvA2018.S2Th23_Dm2_Atm[90].Dm2_Atm,
-      "constraint_line constraint_outer NOvAConstraint",
-      `<div>Expt: ${OscProbConstraintData.NOvA2018.Expt}</div><div>Year: ${
-          OscProbConstraintData.NOvA2018.Year}</div><div>Ref: ${
-          OscProbConstraintData.NOvA2018.Ref}</div>`);
-
-  ConstraintData.AddConstraint(
-      "NOvA2018_68", "dcp", "S2Th23",
-      OscProbConstraintData.NOvA2018.dcp_S2Th23[68].dcp,
-      OscProbConstraintData.NOvA2018.dcp_S2Th23[68].S2Th23,
-      "constraint_line constraint_inner NOvAConstraint",
-      `<div>Expt: ${OscProbConstraintData.NOvA2018.Expt}</div><div>Year: ${
-          OscProbConstraintData.NOvA2018.Year}</div><div>Ref: ${
-          OscProbConstraintData.NOvA2018.Ref}</div>`);
-  ConstraintData.AddConstraint(
-      "NOvA2018_95", "dcp", "S2Th23",
-      OscProbConstraintData.NOvA2018.dcp_S2Th23[95].dcp,
-      OscProbConstraintData.NOvA2018.dcp_S2Th23[95].S2Th23,
-      "constraint_line constraint_outer NOvAConstraint",
-      `<div>Expt: ${OscProbConstraintData.NOvA2018.Expt}</div><div>Year: ${
-          OscProbConstraintData.NOvA2018.Year}</div><div>Ref: ${
-          OscProbConstraintData.NOvA2018.Ref}</div>`);
-
-  ConstraintData.AddConstraint(
-      "NuFIT4_68", "S2Th23", "Dm2_Atm",
-      OscProbConstraintData.NuFIT4.S2Th23_Dm2_Atm[68].S2Th23,
-      OscProbConstraintData.NuFIT4.S2Th23_Dm2_Atm[68].Dm2_Atm,
-      "constraint_line constraint_inner NuFIT4Constraint",
-      `<div>Expt: ${OscProbConstraintData.NuFIT4.Expt}</div><div>Year: ${
-          OscProbConstraintData.NuFIT4.Year}</div><div>Ref: ${
-          OscProbConstraintData.NuFIT4.Ref}</div>`);
-  ConstraintData.AddConstraint(
-      "NuFIT4_90", "S2Th23", "Dm2_Atm",
-      OscProbConstraintData.NuFIT4.S2Th23_Dm2_Atm[90].S2Th23,
-      OscProbConstraintData.NuFIT4.S2Th23_Dm2_Atm[90].Dm2_Atm,
-      "constraint_line constraint_outer NuFIT4Constraint",
-      `<div>Expt: ${OscProbConstraintData.NuFIT4.Expt}</div><div>Year: ${
-          OscProbConstraintData.NuFIT4.Year}</div><div>Ref: ${
-          OscProbConstraintData.NuFIT4.Ref}</div>`);
-
-  ConstraintData.AddConstraint(
-      "NuFIT4_68", "S2Th13", "dcp",
-      OscProbConstraintData.NuFIT4.S2Th13_dcp[68].S2Th13,
-      OscProbConstraintData.NuFIT4.S2Th13_dcp[68].dcp,
-      "constraint_line constraint_inner NuFIT4Constraint",
-      `<div>Expt: ${OscProbConstraintData.NuFIT4.Expt}</div><div>Year: ${
-          OscProbConstraintData.NuFIT4.Year}</div><div>Ref: ${
-          OscProbConstraintData.NuFIT4.Ref}</div>`);
-  ConstraintData.AddConstraint(
-      "NuFIT4_90", "S2Th13", "dcp",
-      OscProbConstraintData.NuFIT4.S2Th13_dcp[90].S2Th13,
-      OscProbConstraintData.NuFIT4.S2Th13_dcp[90].dcp,
-      "constraint_line constraint_outer NuFIT4Constraint",
-      `<div>Expt: ${OscProbConstraintData.NuFIT4.Expt}</div><div>Year: ${
-          OscProbConstraintData.NuFIT4.Year}</div><div>Ref: ${
-          OscProbConstraintData.NuFIT4.Ref}</div>`);
-
-  ConstraintData.AddConstraint(
-      "KamLand_68", "S2Th12", "Dm2_Sol",
-      OscProbConstraintData.KamLand.S2Th12_Dm2_Sol[68].S2Th12,
-      OscProbConstraintData.KamLand.S2Th12_Dm2_Sol[68].Dm2_Sol,
-      "constraint_line constraint_inner KamLandConstraint",
-      `<div>Expt: ${OscProbConstraintData.KamLand.Expt}</div><div>Year: ${
-          OscProbConstraintData.KamLand.Year}</div><div>Ref: ${
-          OscProbConstraintData.KamLand.Ref}</div>`);
-  ConstraintData.AddConstraint(
-      "KamLand_90", "S2Th12", "Dm2_Sol",
-      OscProbConstraintData.KamLand.S2Th12_Dm2_Sol[90].S2Th12,
-      OscProbConstraintData.KamLand.S2Th12_Dm2_Sol[90].Dm2_Sol,
-      "constraint_line constraint_outer KamLandConstraint",
-      `<div>Expt: ${OscProbConstraintData.KamLand.Expt}</div><div>Year: ${
-          OscProbConstraintData.KamLand.Year}</div><div>Ref: ${
-          OscProbConstraintData.KamLand.Ref}</div>`);
-
-  ConstraintData.AddConstraint(
-      "SolarGlobal_68", "S2Th12", "Dm2_Sol",
-      OscProbConstraintData.SolarGlobal.S2Th12_Dm2_Sol[68].S2Th12,
-      OscProbConstraintData.SolarGlobal.S2Th12_Dm2_Sol[68].Dm2_Sol,
-      "constraint_line constraint_inner SolarGlobalConstraint",
-      `<div>Expt: ${OscProbConstraintData.SolarGlobal.Expt}</div><div>Year: ${
-          OscProbConstraintData.SolarGlobal.Year}</div><div>Ref: ${
-          OscProbConstraintData.SolarGlobal.Ref}</div>`);
-  ConstraintData.AddConstraint(
-      "SolarGlobal_90", "S2Th12", "Dm2_Sol",
-      OscProbConstraintData.SolarGlobal.S2Th12_Dm2_Sol[90].S2Th12,
-      OscProbConstraintData.SolarGlobal.S2Th12_Dm2_Sol[90].Dm2_Sol,
-      "constraint_line constraint_outer SolarGlobalConstraint",
-      `<div>Expt: ${OscProbConstraintData.SolarGlobal.Expt}</div><div>Year: ${
-          OscProbConstraintData.SolarGlobal.Year}</div><div>Ref: ${
-          OscProbConstraintData.SolarGlobal.Ref}</div>`);
-
-  ConstraintData.AddConstraint(
-      "DB2018_68", "S2Th13", "dcp",
-      OscProbConstraintData.DayaBay2016.S2Th13_dcp["one_sigma"].S2Th13,
-      OscProbConstraintData.DayaBay2016.S2Th13_dcp["one_sigma"].dcp,
-      "constraint_line constraint_inner DBConstraint",
-      `<div>Expt: ${OscProbConstraintData.DayaBay2016.Expt}</div><div>Year: ${
-          OscProbConstraintData.DayaBay2016.Year}</div><div>Ref: ${
-          OscProbConstraintData.DayaBay2016.Ref}</div>`);
-
-  return ConstraintData.GetConstraintData();
 }
 
 var constraint_plots = [];
 
 function InitializeConstraintWidgets(el, onchanged_callback) {
-
-  let constraint_data = GetConstraintData();
 
   let ax_Dm2_Atm_NH = new ConstraintAxes(
       "Dm2_Atm", "\\(\\Delta{}\\textrm{m}_{32}^{2} 10^{-3} eV\\)", 2.2E-3,
@@ -523,21 +454,18 @@ function InitializeConstraintWidgets(el, onchanged_callback) {
   let ax_S2Th12 = new ConstraintAxes("S2Th12", GetParamLatexName("S2Th12"), 0.2,
                                      0.4, [ 2 ]);
 
-  constraint_plots.push(new ConstraintWidget(constraint_data["S2Th23_Dm2_Atm"],
-                                             ax_S2Th23, ax_Dm2_Atm_NH));
-  constraint_plots.push(new ConstraintWidget(constraint_data["S2Th23_Dm2_Atm"],
-                                             ax_S2Th23, ax_Dm2_Atm_IH));
-  constraint_plots.push(new ConstraintWidget(constraint_data["S2Th13_dcp"],
-                                             ax_S2Th13, ax_dcp_mpi_pi));
-  constraint_plots.push(new ConstraintWidget(constraint_data["dcp_S2Th23"],
-                                             ax_dcp_0_2pi, ax_S2Th23));
-  constraint_plots.push(new ConstraintWidget(constraint_data["S2Th12_Dm2_Sol"],
-                                             ax_S2Th12, ax_Dm2_Sol));
+  constraint_plots.push(new ConstraintWidget(ax_S2Th23, ax_Dm2_Atm_NH));
+  constraint_plots.push(new ConstraintWidget(ax_S2Th23, ax_Dm2_Atm_IH));
+  constraint_plots.push(new ConstraintWidget(ax_S2Th13, ax_dcp_mpi_pi));
+  constraint_plots.push(new ConstraintWidget(ax_dcp_0_2pi, ax_S2Th23));
+  constraint_plots.push(new ConstraintWidget(ax_S2Th12, ax_Dm2_Sol));
 
   for (let plot_i = 0; plot_i < constraint_plots.length; ++plot_i) {
     constraint_plots[plot_i].Initialize(
         el, function(idx, pp) { onchanged_callback(idx, pp); });
   }
+
+  GetConstraintData();
 }
 
 function ClearConstrainWidgetPoints() {

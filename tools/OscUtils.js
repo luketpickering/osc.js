@@ -191,8 +191,8 @@ class OscParams {
   to_string() {
     return `Dm2_Atm: ${this.Get("Dm2_Atm")}, Dm2_Sol: ${
         this.Get("Dm2_Sol")}, S2Th23: ${this.Get("S2Th23")}, S2Th13: ${
-        this.Get("S2Th13")}, S2Th12: ${this.Get("S2Th12")}, dcp: ${
-        this.Get("dcp")}`;
+        this.Get(
+            "S2Th13")}, S2Th12: ${this.Get("S2Th12")}, dcp: ${this.Get("dcp")}`;
   }
 };
 
@@ -217,6 +217,28 @@ function GetNuLatexName(nu_pdg) {
     return "\\(\\nu_{\\tau}\\)";
   }
   }
+}
+
+function IsValidOscParamName(name) {
+  if (name === "Dm2_Atm") {
+    return true;
+
+  } else if (name === "Dm2_Sol") {
+    return true;
+
+  } else if (name === "S2Th23") {
+    return true;
+
+  } else if (name === "S2Th13") {
+    return true;
+
+  } else if (name === "S2Th12") {
+    return true;
+
+  } else if (name === "dcp") {
+    return true;
+  }
+  return false;
 }
 
 function GetParamLatexName(name) {

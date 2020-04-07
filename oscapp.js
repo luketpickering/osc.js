@@ -32,10 +32,7 @@ class oscapp {
   }
 
   AddCurve(plot, Expt, params, index) {
-
-    console.log(`pdg_from: ${Expt.pdg_from} baseline_km: ${
-        Expt.baseline_km} params: ${params.to_string()}`);
-
+    
     this.oschelp.SetOscillation(Expt.pdg_from, Expt.baseline_km, params);
 
     let osc_curve = {

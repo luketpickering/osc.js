@@ -67,8 +67,6 @@ class OscProbPlot {
   }
 
   SetCurve(idx, curve) {
-        console.log(curve.data);
-
     this.ScrubCurvePoints(curve);
 
     if (this.Curves.length > idx) {
@@ -77,7 +75,6 @@ class OscProbPlot {
       this.Curves.length = idx + 1;
     }
 
-    console.log(`Drawing curve for idx: ${idx}`);
     this.Curves[idx] =
         this.svg.append("path")
             .attr("d",
@@ -85,18 +82,14 @@ class OscProbPlot {
             .attr("class", `osc_line ColorWheel-${idx + 1}`);
   };
   RemoveCurve(idx) {
-
     if (this.Curves.length > idx) {
       if (this.Curves[idx] != undefined) {
-        console.log(`Clearing: ${idx}`);
         this.Curves[idx].remove();
       }
     }
   }
 
   ClearAll() {
-        console.log(`Clearing all`);
-
     for (let idx = 0; idx < this.Curves.length; ++idx) {
       if (this.Curves[idx] != undefined) {
         this.Curves[idx].remove();
