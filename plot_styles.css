@@ -58,47 +58,36 @@
   fill: none;
 }
 
-.T2K2018_90 {
+path.other_hierarchy {
+  stroke-width: 1 !important;
+  stroke: lightgray !important;
+}
+
+.T2K2018 {
   stroke: red;
 }
-.T2K2018_68 {
-  stroke: red;
+
+.NH_68 {
   stroke-dasharray: 5, 5;
 }
 
-.NOvA2018_95 {
+.NOvA2018 {
   stroke: green;
 }
-.NOvA2018_68 {
-  stroke: green;
-  stroke-dasharray: 5, 5;
-}
 
-.NuFIT4_90 {
+.NuFIT4 {
   stroke: blue;
 }
-.NuFIT4_68 {
-  stroke: blue;
-  stroke-dasharray: 5, 5;
-}
 
-.KamLand_90 {
+.KamLand {
   stroke: purple;
 }
-.KamLand_68 {
-  stroke: purple;
-  stroke-dasharray: 5, 5;
-}
 
-.SolarGlobal_90 {
+.SolarGlobal {
   stroke: magenta;
 }
-.SolarGlobal_68 {
-  stroke: magenta;
-  stroke-dasharray: 5, 5;
-}
 
-.DayaBay2016_one_sigma {
+.DayaBay2016 {
   stroke: orange;
   stroke-dasharray: 5, 5;
 }
@@ -159,12 +148,12 @@ circle.ColorWheel-5 {
   fill: #ff8066;
 }
 
-circle.inverted_hierachy {
+circle.inverted_hierarchy {
   fill: none !important;
   stroke-width: 2;
 }
 
-circle.normal_hierachy {
+circle.normal_hierarchy {
   
 }
 

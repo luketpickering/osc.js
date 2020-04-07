@@ -50,19 +50,25 @@ class ConstraintWidget {
     this.osc_param_list[i] = oscParams;
 
     let hie_class = "normal_hierarchy";
-    if(oscParams.Get("Dm2_Atm") < 0){
-      hie_class = "inverted_hierachy";
+    if (oscParams.Get("Dm2_Atm") < 0) {
+      this.plot_area_svg.selectAll("path.normal_hierarchy").classed("other_hierarchy", true);
+      this.plot_area_svg.selectAll("path.inverted_hierarchy").classed("other_hierarchy", false);
+      hie_class = "inverted_hierarchy";
+    } else {
+      this.plot_area_svg.selectAll("path.inverted_hierarchy").classed("other_hierarchy", true);
+      this.plot_area_svg.selectAll("path.normal_hierarchy").classed("other_hierarchy", false);
     }
 
     if ((x_scaled >= this.xAxis.min) && (x_scaled <= this.xAxis.max) &&
         (y_scaled >= this.yAxis.min) && (y_scaled <= this.yAxis.max)) {
-      this.svg_points[i] = this.plot_area_svg.append("circle")
-                               .attr("class", `cpoint ColorWheel-${i + 1} ${hie_class}`)
-                               .attr("pointer-events", "none")
-                               .attr("cx", this.xScale(x_scaled))
-                               .attr("cy", this.yScale(y_scaled))
-                               .attr("r", 3)
-                               .attr("data-index", i);
+      this.svg_points[i] =
+          this.plot_area_svg.append("circle")
+              .attr("class", `cpoint ColorWheel-${i + 1} ${hie_class}`)
+              .attr("pointer-events", "none")
+              .attr("cx", this.xScale(x_scaled))
+              .attr("cy", this.yScale(y_scaled))
+              .attr("r", 3)
+              .attr("data-index", i);
     } else {
       this.svg_points[i] = undefined;
     }
@@ -142,7 +148,8 @@ class ConstraintWidget {
               .attr("d",
                     this.lineGen(constraint_data.data[pi])) // 11. Calls the
               // line generator
-              .classed(constraint_data.meta.lineclass, true);
+              .classed(constraint_data.meta.lineclass, true)
+              .classed(constraint_data.meta.hierarchyclass, true);
 
       path.on("mouseup", function() { plot.HandleClick(this); });
 
@@ -180,11 +187,13 @@ class ConstraintWidget {
           .attr("y2", 5)
           .classed(constraint_data.meta.lineclass, true);
       this.constraint_series[constraint_data.meta.expt]
-          .append("a").attr("target","_blank")
+          .append("a")
+          .attr("target", "_blank")
           .attr("href", constraint_data.meta.doi)
           .append("text")
           .attr("x", 22)
-          .attr("y", 10).classed("legend",true)
+          .attr("y", 10)
+          .classed("legend", true)
           .text(constraint_data.meta.expt);
     }
 
@@ -355,6 +364,7 @@ function GetConstraintData() {
           for (let s_it = 0; s_it < contour.Series.length; ++s_it) {
             let sname = contour.Series[s_it];
             let series = contour[sname];
+            let hierarchy = series.Hierarchy;
 
             if (series[contour_xparam].length !=
                 series[contour_yparam].length) {
@@ -405,9 +415,12 @@ function GetConstraintData() {
                   tool_tip_html : `<div>Expt: ${
                       constraint.Expt}</div><div>Year: ${
                       constraint.Year}</div><div>Ref: ${constraint.Ref}</div>`,
-                  lineclass : `${pub}_${contour.Series[s_it]} constraint_line`,
+                  lineclass : `${pub} ${contour.Series[s_it]} constraint_line`,
                   expt : constraint.Expt,
-                  doi : constraint.doi
+                  doi : constraint.doi,
+                  hierarchyclass : (hierarchy === "IH")
+                                       ? "inverted_hierarchy"
+                                       : "normal_hierarchy"
                 },
                 data : path_data
               });
