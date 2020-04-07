@@ -34,6 +34,24 @@ class ConstraintWidget {
     this.constraint_series = {};
   };
 
+  SetShowHierarchy(i) {
+    if(this.osc_param_list.length <= i){
+      return;
+    }
+
+    if (this.osc_param_list[i].Get("Dm2_Atm") < 0) {
+      this.plot_area_svg.selectAll("path.normal_hierarchy")
+          .classed("other_hierarchy", true);
+      this.plot_area_svg.selectAll("path.inverted_hierarchy")
+          .classed("other_hierarchy", false);
+    } else {
+      this.plot_area_svg.selectAll("path.inverted_hierarchy")
+          .classed("other_hierarchy", true);
+      this.plot_area_svg.selectAll("path.normal_hierarchy")
+          .classed("other_hierarchy", false);
+    }
+  }
+
   SetOscParams(i, oscParams) {
 
     if (this.osc_param_list.length > i) {
@@ -51,13 +69,10 @@ class ConstraintWidget {
 
     let hie_class = "normal_hierarchy";
     if (oscParams.Get("Dm2_Atm") < 0) {
-      this.plot_area_svg.selectAll("path.normal_hierarchy").classed("other_hierarchy", true);
-      this.plot_area_svg.selectAll("path.inverted_hierarchy").classed("other_hierarchy", false);
       hie_class = "inverted_hierarchy";
-    } else {
-      this.plot_area_svg.selectAll("path.inverted_hierarchy").classed("other_hierarchy", true);
-      this.plot_area_svg.selectAll("path.normal_hierarchy").classed("other_hierarchy", false);
     }
+
+    this.SetShowHierarchy(i);
 
     if ((x_scaled >= this.xAxis.min) && (x_scaled <= this.xAxis.max) &&
         (y_scaled >= this.yAxis.min) && (y_scaled <= this.yAxis.max)) {
@@ -135,6 +150,7 @@ class ConstraintWidget {
       this.svg_points.length = (idx + 1);
     }
     this.current_index = idx;
+    this.SetShowHierarchy(idx);
   }
 
   AddConstraint(constraint_data) {
@@ -418,9 +434,8 @@ function GetConstraintData() {
                   lineclass : `${pub} ${contour.Series[s_it]} constraint_line`,
                   expt : constraint.Expt,
                   doi : constraint.doi,
-                  hierarchyclass : (hierarchy === "IH")
-                                       ? "inverted_hierarchy"
-                                       : "normal_hierarchy"
+                  hierarchyclass : (hierarchy === "IH") ? "inverted_hierarchy"
+                                                        : "normal_hierarchy"
                 },
                 data : path_data
               });
