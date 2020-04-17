@@ -12,6 +12,7 @@ class oscapp {
 
     this.Widgets = {};
     this.Widgets.OscProbPlot_mu_El = document.getElementById("OscProbPlot_mu");
+    this.Widgets.OscProbPlot_e_El = document.getElementById("OscProbPlot_e");
     this.Widgets.ConstraintControls =
         document.getElementById("ConstraintControls");
     this.Widgets.OscParamTable = document.getElementById("OscParamTable");
@@ -32,7 +33,7 @@ class oscapp {
   }
 
   AddCurve(plot, Expt, params, index) {
-    
+
     this.oschelp.SetOscillation(Expt.pdg_from, Expt.baseline_km, params);
 
     let osc_curve = {
@@ -69,15 +70,26 @@ class oscapp {
         this.Widgets.OscProbPlot_mu_El, 0.1, 5, 0, 1,
         "\\(P(\\nu_{\\mu}\\rightarrow\\nu_{\\mu})\\)");
 
+    this.Widgets.OscProbPlot_e = new OscProbPlot();
+    this.Widgets.OscProbPlot_e.DrawAxes(
+        this.Widgets.OscProbPlot_e_El, 0.1, 5, 0, 0.2,
+        "\\(P(\\nu_{\\mu}\\rightarrow\\nu_{e})\\)");
+
     this.NotifyOscParamChange(0, new OscParams(), kUNKNOWN);
   }
 
   NotifyExptChange() {
     this.Widgets.OscProbPlot_mu.ClearAll();
+    this.Widgets.OscProbPlot_e.ClearAll();
 
     for (let [key, value] of Object.entries(GetAllChosenParameters())) {
       let idx = parseInt(key);
+      let expt = this.Expt;
+      expt.pdg_to = 14 * expt.IsMatter;
       this.AddCurve(this.Widgets.OscProbPlot_mu, this.Expt, value, idx);
+
+      expt.pdg_to = 12 * expt.IsMatter;
+      this.AddCurve(this.Widgets.OscProbPlot_e, this.Expt, value, idx);
     }
   }
 
@@ -113,6 +125,8 @@ class oscapp {
 
     expt.pdg_to = 14 * expt.IsMatter;
     this.AddCurve(this.Widgets.OscProbPlot_mu, expt, osc_params, idx);
+    expt.pdg_to = 12 * expt.IsMatter;
+    this.AddCurve(this.Widgets.OscProbPlot_e, expt, osc_params, idx);
 
     SetConstraintWidgetPoints(idx, osc_params);
     if (notifier != kTABLE) { // Don't update table row as you are changing it
@@ -124,6 +138,7 @@ class oscapp {
     ClearConstrainWidgetPoint(idx);
     ClearOscParamRow(idx);
     this.Widgets.OscProbPlot_mu.RemoveCurve(idx);
+    this.Widgets.OscProbPlot_e.RemoveCurve(idx);
   }
 
   InitializeConstraintControls() { // On click
@@ -147,6 +162,7 @@ class oscapp {
 
     this.Controls.OscProbPlotClearBtn.addEventListener("click", () => {
       this.Widgets.OscProbPlot_mu.ClearAll();
+      this.Widgets.OscProbPlot_e.ClearAll();
       ClearConstrainWidgetPoints();
       ClearOscParamRows();
     });
